@@ -1,0 +1,53 @@
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  z-index: 100;
+  background: linear-gradient(90deg, #3ccf6d, #57e389);
+  transition: width 0.1s linear;
+}
+
+.reading-time {
+  margin: 0 0 1rem;
+  color: var(--vp-c-text-2);
+  font-size: 0.85rem;
+}
+
+/* medium-zoom backdrop blends with the theme */
+.medium-zoom-overlay {
+  background: var(--vp-c-bg) !important;
+  opacity: 0.96 !important;
+}
+.medium-zoom-image--opened {
+  border-radius: 6px;
+}
+
+/* images inside docs are clickable — hint with cursor */
+.content img {
+  cursor: zoom-in;
+}
+
+.notfound {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  line-height: 2;
+}
+.notfound .cmd {
+  color: var(--vp-c-text-1);
+}
+.notfound .cmd .arg {
+  color: var(--vp-c-brand);
+}
+.notfound .err {
+  color: #ff6b6b;
+}
+.notfound .hint a {
+  color: var(--vp-c-brand);
+  text-decoration: none;
+}

@@ -4,8 +4,6 @@
 
 *2026.08*
 
-<span class="cert-hitl" title="本文使用了生成式AI工具，并且我进行了review">Human in the loop</span> · 2026.08
-
 不同模型、不同席位，只共用一个裸 git 仓库当通信总线。
 
 约定很短：前缀帖子（`zcode:` / `kimi:` / `cursor:`）、唤醒正则、一条裁决线程。一夜无人值守跑完 DAgger 弧的采集、QA、合并、训练与评估。

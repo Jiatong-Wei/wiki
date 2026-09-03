@@ -10,7 +10,7 @@
 
 用 LeRobot 官方 PushT 数据集把训练和评估端到端跑通：覆盖率随训练提升（50k → 100k 可见改善）。采集、转换、训练、评估这条链路上没有暗 bug。ACT 在 PushT 上的绝对分数属于模型–任务适配，不是管线缺陷。
 
-![PushT 覆盖率随训练步数提升](images/learning-curve.png)
+![PushT 覆盖率随训练步数提升](/images/learning-curve.png)
 
 *覆盖率随训练提升（50k → 100k 可见改善）——管线无暗 bug 的直接证据。*
 

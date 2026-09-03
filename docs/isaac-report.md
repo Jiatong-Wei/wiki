@@ -10,7 +10,7 @@
 
 报告记录 2026-08-24 至 08-28 的仿真抓取研究：Franka Emika Panda 单臂在 Isaac Sim 中抓起桌面 5 cm 红方块。方法沿行为克隆 → ACT → DAgger 展开。诚实结论：**始终没有完成一次完整抓取**。否定性弧线本身是产出——七档基线说明「调配方」不解决问题；九代数据手术把失败归因到下降与方块的耦合丢失；DAgger 四轮把末端最小距离从 0.54 m 压到 0.094 m。
 
-![ACT day-5 损失曲线：训练正常收敛](images/act-train-curve.png)
+![ACT day-5 损失曲线：训练正常收敛](/images/act-train-curve.png)
 
 *ACT day-5 损失曲线——训练侧一直正常收敛，问题从来不在拟合上。*
 

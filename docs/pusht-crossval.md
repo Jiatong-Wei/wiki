@@ -1,0 +1,17 @@
+# LeRobot × PushT 交叉验证
+
+> 🪪 **Human in the loop** — 本文使用了生成式 AI 工具，并由作者 review。
+
+*2026.08*
+
+<span class="cert-hitl" title="本文使用了生成式AI工具，并且我进行了review">Human in the loop</span> · 2026.08
+
+策略长时间 0/N 时，第一件该做的事不是加数据，是问评估器有没有在撒谎。
+
+用 LeRobot 官方 PushT 数据集把训练和评估端到端跑通：覆盖率随训练提升（50k → 100k 可见改善）。采集、转换、训练、评估这条链路上没有暗 bug。ACT 在 PushT 上的绝对分数属于模型–任务适配，不是管线缺陷。
+
+![PushT 覆盖率随训练步数提升](images/learning-curve.png)
+
+*覆盖率随训练提升（50k → 100k 可见改善）——管线无暗 bug 的直接证据。*
+
+这一步的用处是地基：后面所有关于抓取失败的结论，才站在一条被交叉验证过的评估链上。

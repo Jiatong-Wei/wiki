@@ -14,6 +14,10 @@ hero:
       link: https://jiatong-wei.github.io/
 
 features:
+  - icon: 🫧
+    title: 高斯泼溅二三事
+    details: 从 NeRF 例程到 8000 张航拍素材——一次管中窥豹的 3DGS 实践，含重建工作流横评。
+    link: /splat/
   - icon: 🛞
     title: 智能物流搬运
     details: 电控侧的车、环与发车——麦克纳姆轮 · STM32 · ESP32 无线发车。含赛场实况照片。

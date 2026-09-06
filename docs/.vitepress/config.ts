@@ -8,6 +8,7 @@ const ORIGIN = 'https://jiatong-wei.github.io';
 
 // 其余五篇暂缓公开（内容 review 中），页面仍可直达 URL 访问，恢复即取消注释。
 export const posts: Array<{ link: string; text: string; desc: string; date: string }> = [
+  { link: 'splat/', text: '高斯泼溅二三事', desc: '从 NeRF 例程到 8000 张航拍素材的 3DGS 实践', date: '2026-09-06' },
   // { link: 'isaac-report', text: '技术报告：在仿真里解剖一个抓取', desc: '五日弧封版：完整抓取 0 次，末端 0.54 → 0.094 m', date: '2026-08-29' },
   // { link: 'dagger-four-rounds', text: 'DAgger 四轮迭代：0.54 m → 0.094 m', desc: '教师逐帧重标注 + 聚合再训', date: '2026-08-28' },
   // { link: 'nine-generations', text: '九代受控实验：证伪纯模仿', desc: '一次只改一个变量', date: '2026-08-27' },
@@ -37,6 +38,10 @@ export default defineConfig({
     const title = pageData.title ? `${pageData.title} · 魏佳桐的 Wiki` : '魏佳桐的 Wiki';
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push(['meta', { property: 'og:title', content: title }]);
+  },
+  markdown: {
+    // $...$ inline math — native since VitePress 1.2 (the 3DGS post uses it heavily)
+    math: true,
   },
   themeConfig: {
     nav: [

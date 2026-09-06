@@ -1,6 +1,6 @@
 import DefaultTheme from 'vitepress/theme';
 import { h, defineComponent, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import { useRoute } from 'vitepress';
+import { useRoute, useData } from 'vitepress';
 import './custom.css';
 
 // top reading-progress bar
@@ -19,10 +19,11 @@ const ProgressBar = defineComponent({
   },
 });
 
-// "约 N 分钟读完" injected under each doc's H1
+// "date · 约 N 分钟读完" injected under each doc's H1
 const ReadingTime = defineComponent({
   setup() {
     const route = useRoute();
+    const { frontmatter } = useData();
     const inject = () => {
       const content = document.querySelector('.content-container') ?? document.querySelector('.content');
       const h1 = content?.querySelector('h1');
@@ -31,9 +32,11 @@ const ReadingTime = defineComponent({
       const cjk = (text.match(/[\u4e00-\u9fff]/g) ?? []).length;
       const words = (text.match(/[a-zA-Z]+/g) ?? []).length;
       const minutes = Math.max(1, Math.round(cjk / 400 + words / 220));
+      const raw = frontmatter.value.date as string | undefined;
+      const date = raw ? raw.slice(0, 10) : undefined;
       const tag = document.createElement('p');
       tag.className = 'reading-time';
-      tag.textContent = `约 ${minutes} 分钟读完`;
+      tag.textContent = (date ? `${date} · ` : '') + `约 ${minutes} 分钟读完`;
       h1.after(tag);
     };
     onMounted(async () => {

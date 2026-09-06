@@ -1,3 +1,102 @@
+/* ============================================================
+   Claude-docs inspired theme — warm paper, coral accent, serif heads
+   ============================================================ */
+:root {
+  --vp-c-brand-1: #c15f3c;
+  --vp-c-brand-2: #d97757;
+  --vp-c-brand-3: #a54f2f;
+  --vp-c-brand-soft: rgba(217, 119, 87, 0.14);
+  --vp-c-bg: #faf9f5;
+  --vp-c-bg-alt: #f0eee6;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-divider: #e5e1d8;
+  --vp-c-text-1: #1f1e1d;
+  --vp-c-text-2: #6b6963;
+  --vp-font-family-mono: 'Maple Mono', ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+.dark {
+  --vp-c-brand-1: #e39a7c;
+  --vp-c-brand-2: #d97757;
+  --vp-c-brand-3: #b9613f;
+  --vp-c-brand-soft: rgba(217, 119, 87, 0.16);
+  --vp-c-bg: #1b1a17;
+  --vp-c-bg-alt: #141311;
+  --vp-c-bg-elv: #232220;
+  --vp-c-divider: #34322d;
+  --vp-c-text-1: #e8e4dc;
+  --vp-c-text-2: #a39f96;
+}
+
+/* brand fonts (self-hosted, see config preload) */
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('/wiki/fonts/MapleMono.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Maple Mono';
+  src: url('/wiki/fonts/MapleMono-Italic.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* serif headings — the Claude-docs signature; CJK falls to Songti stack */
+.vp-doc h1, .vp-doc h2, .vp-doc h3,
+.VPNavBarTitle .title, .VPHero .name, .VPHero .text {
+  font-family: Georgia, 'Times New Roman', 'Noto Serif CJK SC', 'Source Han Serif SC',
+    'Songti SC', SimSun, serif;
+}
+.VPNavBarTitle .title { font-size: 17px; }
+
+/* mono for UI chrome + meta info */
+.reading-time, .vp-doc code {
+  font-family: var(--vp-font-family-mono);
+}
+.VPHero .tagline {
+  font-family: var(--vp-font-family-mono);
+  font-style: italic;
+}
+
+/* brand selection */
+::selection { background: rgba(217, 119, 87, 0.28); }
+
+/* MathJax display formulas: scroll in place, never blow up the layout */
+.vp-doc mjx-container[jax="SVG"][display="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.3em 0;
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* link underline grows on hover */
+  .vp-doc p a, .vp-doc li a {
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0 1px;
+    padding-bottom: 1px;
+    transition: background-size 0.25s ease;
+  }
+  .vp-doc p a:hover, .vp-doc li a:hover { background-size: 100% 1px; }
+
+  /* feature cards lift 2px */
+  .VPFeature { transition: transform 0.25s ease, border-color 0.25s ease; }
+  .VPFeature.link:hover { transform: translateY(-2px); }
+
+  #reading-progress { transition: width 0.1s linear; }
+}
+
+/* thin brand scrollbars */
+:root { scrollbar-width: thin; scrollbar-color: var(--vp-c-divider) var(--vp-c-bg); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--vp-c-divider); border-radius: 6px; border: 2px solid var(--vp-c-bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--vp-c-brand-1); }
+
 #reading-progress {
   position: fixed;
   top: 0;
@@ -5,14 +104,21 @@
   height: 2px;
   width: 0;
   z-index: 100;
-  background: linear-gradient(90deg, #3ccf6d, #57e389);
+  background: linear-gradient(90deg, #d97757, #e39a7c);
   transition: width 0.1s linear;
 }
 
 .reading-time {
   margin: 0 0 1rem;
   color: var(--vp-c-text-2);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+}
+.reading-time::before {
+  content: '\25CF';
+  color: var(--vp-c-brand-1);
+  font-size: 0.55em;
+  margin-right: 0.6em;
+  vertical-align: 0.2em;
 }
 
 /* medium-zoom backdrop blends with the theme */
@@ -27,29 +133,6 @@
 /* images inside docs are clickable — hint with cursor */
 .content img {
   cursor: zoom-in;
-}
-
-.notfound {
-  min-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  line-height: 2;
-}
-.notfound .cmd {
-  color: var(--vp-c-text-1);
-}
-.notfound .cmd .arg {
-  color: var(--vp-c-brand);
-}
-.notfound .err {
-  color: #ff6b6b;
-}
-.notfound .hint a {
-  color: var(--vp-c-brand);
-  text-decoration: none;
 }
 
 /* wide tables: scroll horizontally instead of squeezing columns into strips.

@@ -7,8 +7,8 @@ hero:
   tagline: manipulation · mobile robots · 可复算的实验记录与工程长文
   actions:
     - theme: brand
-      text: 读智能物流搬运
-      link: /gc-logistics
+      text: 读高斯泼溅二三事
+      link: /splat/
     - theme: alt
       text: 终端版主页
       link: https://jiatong-wei.github.io/

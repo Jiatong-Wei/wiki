@@ -25,6 +25,8 @@ export default defineConfig({
   lastUpdated: true,
   head: [
     ['link', { rel: 'icon', href: `${BASE}favicon.ico` }],
+    ['meta', { name: 'theme-color', content: '#1b1a17' }],
+    ['link', { rel: 'preload', href: `${BASE}fonts/MapleMono.woff2`, as: 'font', type: 'font/woff2', crossorigin: '' }],
     ['meta', { property: 'og:site_name', content: '魏佳桐的 Wiki' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: '魏佳桐的 Wiki' }],

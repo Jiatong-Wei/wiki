@@ -6,12 +6,13 @@ import { resolve } from 'node:path';
 const BASE = '/wiki/';
 const ORIGIN = 'https://jiatong-wei.github.io';
 
+// 其余五篇暂缓公开（内容 review 中），页面仍可直达 URL 访问，恢复即取消注释。
 export const posts: Array<{ link: string; text: string; desc: string; date: string }> = [
-  { link: 'isaac-report', text: '技术报告：在仿真里解剖一个抓取', desc: '五日弧封版：完整抓取 0 次，末端 0.54 → 0.094 m', date: '2026-08-29' },
-  { link: 'dagger-four-rounds', text: 'DAgger 四轮迭代：0.54 m → 0.094 m', desc: '教师逐帧重标注 + 聚合再训', date: '2026-08-28' },
-  { link: 'nine-generations', text: '九代受控实验：证伪纯模仿', desc: '一次只改一个变量', date: '2026-08-27' },
-  { link: 'pusht-crossval', text: 'LeRobot × PushT 交叉验证', desc: '先问评估器有没有在撒谎', date: '2026-08-26' },
-  { link: 'git-agent-protocol', text: '三个 AI 代理的 git 协作协议', desc: '一个裸 git 仓库当通信总线', date: '2026-08-25' },
+  // { link: 'isaac-report', text: '技术报告：在仿真里解剖一个抓取', desc: '五日弧封版：完整抓取 0 次，末端 0.54 → 0.094 m', date: '2026-08-29' },
+  // { link: 'dagger-four-rounds', text: 'DAgger 四轮迭代：0.54 m → 0.094 m', desc: '教师逐帧重标注 + 聚合再训', date: '2026-08-28' },
+  // { link: 'nine-generations', text: '九代受控实验：证伪纯模仿', desc: '一次只改一个变量', date: '2026-08-27' },
+  // { link: 'pusht-crossval', text: 'LeRobot × PushT 交叉验证', desc: '先问评估器有没有在撒谎', date: '2026-08-26' },
+  // { link: 'git-agent-protocol', text: '三个 AI 代理的 git 协作协议', desc: '一个裸 git 仓库当通信总线', date: '2026-08-25' },
   { link: 'gc-logistics', text: '智能物流搬运：电控侧的车、环与发车', desc: '麦克纳姆轮 · STM32 · ESP32 无线发车', date: '2025-10-15' },
 ];
 
@@ -46,12 +47,8 @@ export default defineConfig({
     ],
     sidebar: [
       {
-        text: '研究记录（Isaac Sim 抓取弧）',
-        items: posts.slice(0, 4).map(({ link, text }) => ({ link: `/${link}`, text })),
-      },
-      {
-        text: '工程与协作',
-        items: posts.slice(4).map(({ link, text }) => ({ link: `/${link}`, text })),
+        text: '项目手记',
+        items: posts.map(({ link, text }) => ({ link: `/${link}`, text })),
       },
     ],
     search: { provider: 'local' },

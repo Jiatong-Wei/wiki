@@ -61,6 +61,8 @@ export default defineConfig({
       message: '内容以 CC BY-NC 4.0 发布 · 文章标注 Human / Human in the loop',
     },
   },
+  // dev convenience: localhost:5173 (no /wiki/) redirects into the base path
+  // instead of 404ing — the deploy target redirects at the server level, dev doesn't
   // hand-rolled RSS + sitemap + static 404 at build time — no extra deps
   buildEnd({ outDir }) {
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');

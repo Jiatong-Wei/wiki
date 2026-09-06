@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev docs",
+    "dev": "node scripts/dev.mjs",
     "build": "vitepress build docs",
     "preview": "vitepress preview docs"
   },

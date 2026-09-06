@@ -51,3 +51,23 @@
   color: var(--vp-c-brand);
   text-decoration: none;
 }
+
+/* wide tables: scroll horizontally instead of squeezing columns into strips.
+   display:block + overflow-x turns the table itself into a scroll container;
+   the min-width keeps each column wide enough to breathe (cells wrap at that
+   width), so total width exceeds the content column and the scroll engages. */
+.vp-doc table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.vp-doc th,
+.vp-doc td {
+  min-width: 12em;
+  padding: 10px 16px;
+  line-height: 1.8;
+  vertical-align: top;
+}
+.vp-doc th {
+  white-space: nowrap;
+}

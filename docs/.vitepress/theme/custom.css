@@ -154,3 +154,13 @@
 .vp-doc th {
   white-space: nowrap;
 }
+
+/* B站嵌入视频：全宽 16:9，不破版心 */
+.vp-doc iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+  border-radius: 8px;
+  display: block;
+}

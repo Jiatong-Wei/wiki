@@ -2,9 +2,9 @@
 date: 2025-10-15
 ---
 
-# 智能物流搬运：电控侧的车、环与发车
+# 智能物流搬运机器人-2025省赛直录
 
-> 🪪 **Human in the loop** — 本文使用了生成式 AI 工具，并由作者 review。
+> 🪪 **Human certified** — 本文使用了GenAI，Joye has reviewed。
 
 
 2025 年中国大学生工程实践与创新能力大赛，陕西赛区，智能物流搬运。我在队里做电控。成绩是一等奖，全省第三，进入决赛。
@@ -44,12 +44,16 @@ date: 2025-10-15
 
 > 待补：待 review 补一句：从发散到可用，中间改过哪些增益；是否先调 P 再补 I/D。
 
+<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=117217224170808&bvid=BV1Bttm6qEbT&cid=41603368454&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+
 ## 无线发车，跑完全程
 
 ESP32 把发车做成无线之后，车可以在赛场上听指令起步，并在一次测试里跑完全程。这不是奖状上的句子，是一条可以回看的轨迹：底盘稳了，任务序列才接得上。
 
 > 待补：待 review 补一句：夹爪从原型前伸舵机爪改到决赛起升机构的机械原因；无线协议与抗干扰。
 
+<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=117217073043582&bvid=BV15Sty6RErR&cid=41602322351&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+
 ## 结果
 
-陕西赛区一等奖，全省第三，进入决赛。这篇只写电控侧我确定的事实：分层、两次失败的角度环、一次跑通的无线发车。机械迭代和视觉细节，等我补完再写进同一条回路里。
+以全省第三的成绩获得陕西赛区一等奖。

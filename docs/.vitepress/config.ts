@@ -22,12 +22,21 @@ export default defineConfig({
   title: "Joye's Wiki",
   description: 'manipulation · mobile robots · 在仿真里较真',
   base: BASE,
+  appearance: 'light',
   lastUpdated: true,
   head: [
     ['link', { rel: 'icon', href: `${BASE}favicon.ico` }],
     ['link', { rel: 'apple-touch-icon', href: `${BASE}apple-touch-icon.png` }],
     ['meta', { name: 'theme-color', content: '#1b1a17' }],
     ['link', { rel: 'preload', href: `${BASE}fonts/MapleMono.woff2`, as: 'font', type: 'font/woff2', crossorigin: '' }],
+    // one-time migration: the default flipped from system-follow to light.
+    // Drop the stored 'auto' (VitePress wrote it on old visits) so the new
+    // light default reaches returning visitors; explicit user picks stay.
+    // VitePress 1.6.4 hardcodes initialValue='auto' for string appearance,
+    // so 'light' cannot act as a default — seed the storage ourselves:
+    // any non-explicit preference (empty/auto) becomes light. Explicit
+    // user picks (light/dark) are kept.
+    ['script', {}, `try{var k='vitepress-theme-appearance';var v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'){localStorage.setItem(k,'light')}}catch(e){}`],
     ['meta', { property: 'og:site_name', content: "Joye's Wiki" }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: "Joye's Wiki" }],

@@ -19,7 +19,7 @@ export const posts: Array<{ link: string; text: string; desc: string; date: stri
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: '魏佳桐的 Wiki',
+  title: "Joye's Wiki",
   description: 'manipulation · mobile robots · 在仿真里较真',
   base: BASE,
   lastUpdated: true,
@@ -28,9 +28,9 @@ export default defineConfig({
     ['link', { rel: 'apple-touch-icon', href: `${BASE}apple-touch-icon.png` }],
     ['meta', { name: 'theme-color', content: '#1b1a17' }],
     ['link', { rel: 'preload', href: `${BASE}fonts/MapleMono.woff2`, as: 'font', type: 'font/woff2', crossorigin: '' }],
-    ['meta', { property: 'og:site_name', content: '魏佳桐的 Wiki' }],
+    ['meta', { property: 'og:site_name', content: "Joye's Wiki" }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: '魏佳桐的 Wiki' }],
+    ['meta', { property: 'og:title', content: "Joye's Wiki" }],
     ['meta', { property: 'og:description', content: 'manipulation · mobile robots · 在仿真里较真' }],
     ['meta', { property: 'og:image', content: `${ORIGIN}/images/og-card.png` }],
     ['meta', { property: 'og:url', content: `${ORIGIN}/wiki/` }],
@@ -38,7 +38,7 @@ export default defineConfig({
   ],
   transformPageData(pageData) {
     // per-page og:title for nicer shares
-    const title = pageData.title ? `${pageData.title} · 魏佳桐的 Wiki` : '魏佳桐的 Wiki';
+    const title = pageData.title ? `${pageData.title} · Joye's Wiki` : "Joye's Wiki";
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push(['meta', { property: 'og:title', content: title }]);
   },
@@ -73,7 +73,7 @@ export default defineConfig({
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
-<title>魏佳桐的 Wiki</title>
+<title>Joye's Wiki</title>
 <link>${ORIGIN}/wiki/</link>
 <description>manipulation · mobile robots · 在仿真里较真</description>
 ${posts

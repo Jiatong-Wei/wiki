@@ -74,11 +74,40 @@ const ZoomImages = defineComponent({
   },
 });
 
+// navbar title: "Joye's" stays serif, "Wiki" flips to Maple Mono cursive —
+// the iPhone-welcome-page mixed-typeface greeting. VitePress renders the
+// title as plain text from config, so we restyle the DOM once after mount.
+const BrandTitle = defineComponent({
+  setup() {
+    const route = useRoute();
+    const apply = () => {
+      document
+        .querySelectorAll('.VPNavBarTitle .title, .VPNavScreen .site-name')
+        .forEach((el) => {
+          const host = el as HTMLElement;
+          if (host.dataset.brandSplit === '1') return;
+          host.dataset.brandSplit = '1';
+          if (!host.textContent?.includes("Joye's")) return;
+          host.innerHTML = `Joye's <em class="nb-cursive">Wiki</em>`;
+        });
+    };
+    onMounted(async () => {
+      await nextTick();
+      apply();
+      watch(() => route.path, async () => {
+        await nextTick();
+        apply();
+      });
+    });
+    return () => null;
+  },
+});
+
 export default {
   extends: DefaultTheme,
   Layout: () =>
     h(DefaultTheme.Layout, null, {
-      'layout-top': () => h(ProgressBar),
+      'layout-top': () => [h(ProgressBar), h(BrandTitle)],
       'doc-after': () => h(ReadingTime),
       'doc-bottom': () => h(ZoomImages),
     }),

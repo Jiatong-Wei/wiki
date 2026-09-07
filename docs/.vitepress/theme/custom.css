@@ -164,3 +164,15 @@
   border-radius: 8px;
   display: block;
 }
+
+/* Human certified badge icon: coral in light, softer coral in dark */
+.vp-doc .cert-ico { color: #c15f3c; vertical-align: -2px; }
+.dark .vp-doc .cert-ico { color: #e39a7c; }
+
+/* navbar title: "Joye's" serif + "Wiki" in Maple Mono cursive (iPhone-welcome mix) */
+.nb-cursive {
+  font-family: var(--vp-font-family-mono);
+  font-style: italic;
+  color: var(--vp-c-brand-1);
+  letter-spacing: 0.01em;
+}

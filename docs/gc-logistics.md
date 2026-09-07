@@ -4,7 +4,7 @@ date: 2025-10-15
 
 # 智能物流搬运机器人-2025省赛直录
 
-> 🪪 **Human certified** — 本文使用了GenAI，Joye has reviewed。
+> <svg class="cert-ico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 2.2 C10.2 3.4 11.9 3.7 13 3.4 C12.9 8.4 11.7 11.6 8.2 14 C5 11.9 3.6 9.6 3.1 5.6 C4.9 5.1 6.8 3.9 8.4 2.2 Z" stroke-width="1.4"/><path d="M6.1 8.4 7.7 10 10.9 6.6" stroke-width="1.4"/></svg> **Human certified** — 本文使用了GenAI，Joye has reviewed。
 
 
 2025 年中国大学生工程实践与创新能力大赛，陕西赛区，智能物流搬运。我在队里做电控。成绩是一等奖，全省第三，进入决赛。

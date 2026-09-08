@@ -22,9 +22,11 @@ summary: 意犹未尽
 - 机械，需要掌握基本的三维设计软件，针对赛题的具体要求给出相应方案，并组装成车
 - 电控，需要掌握基本的嵌入式开发技能，针对赛题调节动作组程序等
 - 软件，需要掌握基本的linux单板电脑开发技能，根据赛题要求编写上位机
-个人体感可能电控和软件在备赛过程中会比较坐牢，因为需要不停地调试，我们这个比赛对机械还是相对友好的，到最后每个队的方案可能都会Overfit到同一个构型，所以负责机械的同学可能只有备赛初期和末期会压力大一点，中间只要车不坏都会比较自由。\
-下图是我们备赛过程中的一版原型机
-![原型机：前伸舵机爪 + 前置相机 + 双侧料盒](/images/gc/prototype.jpg)
+个人体感可能电控和软件在备赛过程中会比较坐牢，因为需要不停地调试，我们这个比赛对机械还是相对友好的，到最后每个队的方案可能都会Overfit到同一个构型，所以负责机械的同学可能只有备赛初期和末期会压力大一点，中间只要车不坏都会比较自由。
+
+> 下图是我们备赛过程中的一版原型机
+
+<a href="/images/gc/prototype.jpg" target="_blank" rel="noopener" title="点开看完整比例的图"><img src="/images/gc/prototype.jpg" alt="原型机：前伸舵机爪 + 前置相机 + 双侧料盒"></a>
 可以看到机器结构大概是底盘+抓取的设计，麦轮底盘提供全向移动能力，抓取机构负责抓取物块。这种构型是非常经典的一种方案，省赛赛场上非常常见，不过站在今天来看，这种构型的问题也很多：
 
 - 抓取空间受限，每次只能抓离车身最近的物块，这使得如果行进到转盘处，目标物块如果恰好不在抓取窗口内，就只能等待下一轮再尝试抓取，时间浪费严重
@@ -45,7 +47,7 @@ summary: 意犹未尽
 
 <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=117217224170808&bvid=BV1Bttm6qEbT&cid=41603368454&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 
-### Test`
+### Test
 备赛过程中的一次调车实录，实现了ESP32无线发车
 <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=117217073043582&bvid=BV15Sty6RErR&cid=41602322351&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 

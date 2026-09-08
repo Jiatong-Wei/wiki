@@ -52,6 +52,9 @@ const ReadingTime = defineComponent({
 });
 
 // image lightbox: click an image to zoom, esc / click to close
+// linked images (<a><img>) navigate instead — zooming a CSS-cropped img would
+// squeeze the full frame into the cropped box, so those opt out via the link
+const ZOOM_SELECTOR = '.content img:not(a img)';
 const ZoomImages = defineComponent({
   setup() {
     const route = useRoute();
@@ -61,8 +64,8 @@ const ZoomImages = defineComponent({
       attached = true;
       // dynamic import keeps the browser-only lib out of the SSR graph
       const { default: mediumZoom } = await import('medium-zoom');
-      const zoom = mediumZoom('.content img', { background: 'var(--vp-c-bg)' });
-      const reattach = () => zoom.attach([...document.querySelectorAll('.content img')]);
+      const zoom = mediumZoom(ZOOM_SELECTOR, { background: 'var(--vp-c-bg)' });
+      const reattach = () => zoom.attach([...document.querySelectorAll(ZOOM_SELECTOR)]);
       reattach();
       watch(() => route.path, async () => {
         await nextTick();

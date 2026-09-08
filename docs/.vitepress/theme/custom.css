@@ -284,6 +284,20 @@
   cursor: zoom-in;
 }
 
+/* linked images navigate to the full frame instead of lightboxing */
+.content a img {
+  cursor: pointer;
+}
+
+/* 原型机图是 645×1400 竖长幅面：按 venue 图同款 16:9 裁显，
+   object-position 57% 对准「料盒—夹爪—舵机—麦轮」信息带。
+   medium-zoom 的放大克隆挂在 body 上、不在 .vp-doc 内，点开仍是完整全图。 */
+.vp-doc img[alt^="原型机"] {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center 57%;
+}
+
 /* wide tables: scroll horizontally instead of squeezing columns into strips.
    display:block + overflow-x turns the table itself into a scroll container;
    the min-width keeps each column wide enough to breathe (cells wrap at that

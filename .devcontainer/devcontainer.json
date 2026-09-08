@@ -1,0 +1,24 @@
+{
+  "name": "Joye's Wiki",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "remoteUser": "node",
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Wiki dev — open /wiki/",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "otherPortsAttributes": { "onAutoForward": "ignore" },
+  "postCreateCommand": "npm install",
+  "postStartCommand": "npm run dev:codespace",
+  "customizations": {
+    "vscode": {
+      "extensions": ["Vue.volar", "yzhang.markdown-all-in-one"],
+      "settings": {
+        "editor.formatOnSave": false,
+        "files.eol": "\n"
+      }
+    }
+  }
+}

@@ -78,6 +78,29 @@ export default defineConfig({
   },
   // dev convenience: localhost:5173 (no /wiki/) redirects into the base path
   // instead of 404ing — the deploy target redirects at the server level, dev doesn't
+  // dev convenience: bare / redirects into the /wiki/ base so Codespaces
+  // auto-open (and any local dev browser tab) lands on the homepage
+  vite: {
+    server: {
+      middlewareMode: false,
+    },
+    plugins: [
+      {
+        name: 'dev-root-redirect',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (req.url === '/' || req.url === '/index.html') {
+              res.statusCode = 302;
+              res.setHeader('Location', '/wiki/');
+              res.end();
+              return;
+            }
+            next();
+          });
+        },
+      },
+    ],
+  },
   // hand-rolled RSS + sitemap + static 404 at build time — no extra deps
   buildEnd({ outDir }) {
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');

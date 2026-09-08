@@ -8,13 +8,13 @@ const ORIGIN = 'https://jiatong-wei.github.io';
 
 // 其余五篇暂缓公开（内容 review 中），页面仍可直达 URL 访问，恢复即取消注释。
 export const posts: Array<{ link: string; text: string; desc: string; date: string }> = [
-  { link: 'splat/', text: '高斯泼溅二三事', desc: '从 NeRF 例程到 8000 张航拍素材的 3DGS 实践', date: '2026-09-06' },
+  { link: 'splat/', text: '高斯泼溅二三事', desc: '一个民间爱好者遇到一群民间爱好者', date: '2026-02-28' },
   // { link: 'isaac-report', text: '技术报告：在仿真里解剖一个抓取', desc: '五日弧封版：完整抓取 0 次，末端 0.54 → 0.094 m', date: '2026-08-29' },
   // { link: 'dagger-four-rounds', text: 'DAgger 四轮迭代：0.54 m → 0.094 m', desc: '教师逐帧重标注 + 聚合再训', date: '2026-08-28' },
   // { link: 'nine-generations', text: '九代受控实验：证伪纯模仿', desc: '一次只改一个变量', date: '2026-08-27' },
   // { link: 'pusht-crossval', text: 'LeRobot × PushT 交叉验证', desc: '先问评估器有没有在撒谎', date: '2026-08-26' },
   // { link: 'git-agent-protocol', text: '三个 AI 代理的 git 协作协议', desc: '一个裸 git 仓库当通信总线', date: '2026-08-25' },
-  { link: 'gc-logistics', text: '智能物流搬运：电控侧的车、环与发车', desc: '麦克纳姆轮 · STM32 · ESP32 无线发车', date: '2025-10-15' },
+  { link: 'gc-logistics', text: '智能物流搬运机器人-2025省赛回忆录', desc: '意犹未尽', date: '2025-04-27' },
 ];
 
 export default defineConfig({
@@ -59,7 +59,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
-      { text: '终端主页', link: `${ORIGIN}/` },
+      { text: '个人主页', link: `${ORIGIN}/` },
       { text: 'GitHub', link: 'https://github.com/Jiatong-Wei' },
       { text: 'RSS', link: `${BASE}rss.xml` },
     ],
@@ -73,7 +73,7 @@ export default defineConfig({
     outline: { level: [2, 3], label: '本页目录' },
     lastUpdated: { text: '最后更新' },
     footer: {
-      message: '内容以 CC BY-NC 4.0 发布 · 文章标注 Human / Human in the loop',
+      message: '内容以 CC BY-NC 4.0 发布',
     },
   },
   // dev convenience: localhost:5173 (no /wiki/) redirects into the base path

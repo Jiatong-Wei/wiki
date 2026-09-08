@@ -23,7 +23,8 @@ export default defineConfig({
   description: 'manipulation · mobile robots · 在仿真里较真',
   base: BASE,
   appearance: 'light',
-  lastUpdated: true,
+  lastUpdated: { text: '最后更新', formatOptions: { dateStyle: 'long', forceLocale: true } },
+  docFooter: { prev: '上一篇', next: '下一篇' },
   head: [
     ['link', { rel: 'icon', href: `${BASE}favicon.ico` }],
     ['link', { rel: 'apple-touch-icon', href: `${BASE}apple-touch-icon.png` }],
@@ -69,7 +70,7 @@ export default defineConfig({
       },
     ],
     search: { provider: 'local' },
-    outline: { level: [2, 3] },
+    outline: { level: [2, 3], label: '本页目录' },
     lastUpdated: { text: '最后更新' },
     footer: {
       message: '内容以 CC BY-NC 4.0 发布 · 文章标注 Human / Human in the loop',

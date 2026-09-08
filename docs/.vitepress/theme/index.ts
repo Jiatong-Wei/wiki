@@ -103,12 +103,60 @@ const BrandTitle = defineComponent({
   },
 });
 
+// "手气不错" random-pick: the hero brand button links to /random/, which is
+// a real page (no-JS fallback). With JS, this capture-phase listener picks a
+// random article among the homepage feature-card links and navigates there.
+const RandomPick = defineComponent({
+  setup() {
+    if (typeof window === 'undefined') return () => null;
+    window.addEventListener('click', (e) => {
+      const anchor = (e.target as HTMLElement)?.closest?.('a');
+      if (!anchor || !anchor.getAttribute('href')?.endsWith('/random/')) return;
+      e.preventDefault();
+      const pool = [...document.querySelectorAll('.VPFeature.link')]
+        .map((card) => (card as HTMLAnchorElement).getAttribute('href'))
+        .filter((h): h is string => !!h);
+      const target = pool.length
+        ? pool[Math.floor(Math.random() * pool.length)]
+        : '/splat/';
+      window.location.assign(target);
+    }, true);
+    return () => null;
+  },
+});
+
+// article lede: frontmatter.summary rendered between H1 and the meta line.
+// Registered AFTER ReadingTime so insertion order lands h1 -> lede -> meta.
+const Lede = defineComponent({
+  setup() {
+    const route = useRoute();
+    const { frontmatter } = useData();
+    const inject = () => {
+      const content = document.querySelector('.content-container') ?? document.querySelector('.content');
+      const h1 = content?.querySelector('h1');
+      if (!content || !h1 || content.querySelector('.doc-lede')) return;
+      const summary = frontmatter.value.summary as string | undefined;
+      if (!summary) return;
+      const p = document.createElement('p');
+      p.className = 'doc-lede';
+      p.textContent = summary;
+      h1.after(p);
+    };
+    onMounted(async () => {
+      await nextTick();
+      inject();
+      watch(() => route.path, async () => { await nextTick(); inject(); });
+    });
+    return () => null;
+  },
+});
+
 export default {
   extends: DefaultTheme,
   Layout: () =>
     h(DefaultTheme.Layout, null, {
-      'layout-top': () => [h(ProgressBar), h(BrandTitle)],
-      'doc-after': () => h(ReadingTime),
+      'layout-top': () => [h(ProgressBar), h(BrandTitle), h(RandomPick)],
+      'doc-after': () => [h(ReadingTime), h(Lede)],
       'doc-bottom': () => h(ZoomImages),
     }),
 };

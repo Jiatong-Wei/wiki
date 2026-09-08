@@ -9,6 +9,8 @@
   --vp-c-bg: #faf9f5;
   --vp-c-bg-alt: #f0eee6;
   --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f4f2ec;
+  --vp-c-default-soft: #efece4;
   --vp-c-divider: #e5e1d8;
   --vp-c-text-1: #1f1e1d;
   --vp-c-text-2: #6b6963;
@@ -22,6 +24,8 @@
   --vp-c-bg: #1b1a17;
   --vp-c-bg-alt: #141311;
   --vp-c-bg-elv: #232220;
+  --vp-c-bg-soft: #232220;
+  --vp-c-default-soft: #2b2926;
   --vp-c-divider: #34322d;
   --vp-c-text-1: #e8e4dc;
   --vp-c-text-2: #a39f96;
@@ -45,7 +49,8 @@
 
 /* serif headings — the Claude-docs signature; CJK falls to Songti stack */
 .vp-doc h1, .vp-doc h2, .vp-doc h3,
-.VPNavBarTitle .title, .VPHero .name, .VPHero .text {
+.VPNavBarTitle .title, .VPHero .name, .VPHero .text,
+.VPFeature .title {
   font-family: Georgia, 'Times New Roman', 'Noto Serif CJK SC', 'Source Han Serif SC',
     'Songti SC', SimSun, serif;
 }
@@ -71,22 +76,147 @@
   max-width: 100%;
 }
 
+/* ============================================================
+   Homepage: hero display hierarchy + warm cards + footnote band
+   ============================================================ */
+
+/* A1 hero: the brand eyebrow is retired (navbar owns the name now); the
+   display text is the only hero line. Name stays in frontmatter for h1
+   semantics but renders nothing. */
+.VPHero .name { display: none; }
+.VPHero .text {
+  max-width: 760px;
+  margin-top: 10px;
+  font-size: clamp(40px, 8vw, 80px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+.VPHero .tagline {
+  max-width: 640px;
+  padding-top: 20px;
+  font-size: 16px;
+  line-height: 1.9;
+}
+.VPHero .actions { padding-top: 40px; }
+
+/* A6a: faint coral radial glow top-right of the hero — warmth for the void */
+.VPHero {
+  background: radial-gradient(620px 320px at 76% 22%, rgba(217, 119, 87, 0.07), transparent 70%);
+}
+.dark .VPHero {
+  background: radial-gradient(620px 320px at 76% 22%, rgba(217, 119, 87, 0.06), transparent 70%);
+}
+
+/* A2 cards: warm white surface, hairline border, serif title, mono date.
+   .VPHome prefix lifts specificity above VPFeature.vue scoped defaults. */
+.VPHome .VPFeature {
+  border: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg-elv);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.VPHome .VPFeature.link:hover {
+  border-color: color-mix(in srgb, var(--vp-c-brand-2) 45%, var(--vp-c-divider));
+  box-shadow: 0 2px 6px rgba(31, 30, 29, 0.05), 0 14px 30px rgba(31, 30, 29, 0.06);
+}
+.dark .VPHome .VPFeature.link:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+/* card interior rhythm: meta+title group tight, CTA anchored with air */
+.VPHome .VPFeature .box { padding: 26px 28px; }
+.VPFeature .title { font-size: 20px; line-height: 1.5; }
+.VPFeature .details {
+  font-size: 13.5px;
+  line-height: 1.75;
+  padding-top: 10px;
+  color: var(--vp-c-text-2);
+}
+.VPFeature .link-text {
+  font-size: 13px;
+  padding-top: 18px;
+  color: var(--vp-c-brand-1);
+}
+
+/* A3r icon box: emoji retired — coral mono serial (01/02…) via CSS counter.
+   index.md keeps its icon fields untouched; font-size:0 swallows the glyphs. */
+.VPHome .VPFeatures .items { counter-reset: feature; }
+.VPHome .VPFeature { counter-increment: feature; }
+.VPHome .VPFeature .icon {
+  width: auto;
+  height: auto;
+  justify-content: flex-start;
+  background-color: transparent;
+  border-radius: 0;
+  margin-bottom: 18px;
+  font-size: 0;
+}
+.VPHome .VPFeature .icon::before {
+  content: counter(feature, decimal-leading-zero);
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--vp-c-brand-1);
+}
+
+/* A5 buttons: 8px corners, alt becomes warm-bordered secondary */
+.VPHero .VPButton.medium {
+  border-radius: 8px;
+  padding: 0 22px;
+  line-height: 40px;
+  font-weight: 500;
+}
+.VPHero .VPButton.alt {
+  border-color: var(--vp-c-divider);
+  background-color: var(--vp-c-bg-elv);
+  color: var(--vp-c-text-1);
+}
+.VPHero .VPButton.alt:hover {
+  border-color: var(--vp-c-brand-2);
+  color: var(--vp-c-brand-1);
+  background-color: var(--vp-c-bg-elv);
+}
+
+/* A4 tips: from squeezed blockquote to a footnote band under a hairline */
+.VPHome .vp-doc blockquote {
+  margin: 64px 0 0;
+  border-left: none;
+  border-top: 1px solid var(--vp-c-divider);
+  padding: 18px 0 0;
+}
+.VPHome .vp-doc blockquote > p {
+  font-size: 13.5px;
+  line-height: 2.05;
+}
+.VPHome .vp-doc blockquote strong {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+/* consecutive notes join under one hairline */
+.VPHome .vp-doc blockquote + blockquote {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 4px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  /* link underline grows on hover */
+  /* B4 links: constant faint underline, solid on hover (replaces grow-in) */
   .vp-doc p a, .vp-doc li a {
     text-decoration: none;
-    background-image: linear-gradient(currentColor, currentColor);
+    background-image: linear-gradient(color-mix(in srgb, currentColor 38%, transparent), color-mix(in srgb, currentColor 38%, transparent));
     background-repeat: no-repeat;
     background-position: 0 100%;
-    background-size: 0 1px;
+    background-size: 100% 1px;
     padding-bottom: 1px;
-    transition: background-size 0.25s ease;
   }
-  .vp-doc p a:hover, .vp-doc li a:hover { background-size: 100% 1px; }
+  .vp-doc p a:hover, .vp-doc li a:hover {
+    background-image: linear-gradient(currentColor, currentColor);
+  }
 
-  /* feature cards lift 2px */
-  .VPFeature { transition: transform 0.25s ease, border-color 0.25s ease; }
-  .VPFeature.link:hover { transform: translateY(-2px); }
+  .VPHome .VPFeature.link:hover { transform: translateY(-2px); }
+  .VPHome .VPFeature .link-text-icon { transition: transform 0.25s ease; }
+  .VPHome .VPFeature.link:hover .link-text-icon { transform: translateX(3px); }
 
   #reading-progress { transition: width 0.1s linear; }
 }
@@ -108,8 +238,17 @@
   transition: width 0.1s linear;
 }
 
+/* ============================================================
+   Article page polish
+   ============================================================ */
+
+/* B1 headline block: larger H1, hairline under the meta line */
+.vp-doc h1 { font-size: clamp(30px, 4vw, 38px); line-height: 1.25; }
 .reading-time {
   margin: 0 0 1rem;
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--vp-c-divider);
   color: var(--vp-c-text-2);
   font-size: 0.8rem;
 }
@@ -121,13 +260,23 @@
   vertical-align: 0.2em;
 }
 
+/* B2 quiet H2s: drop the default top rule, spacing carries the rhythm */
+.vp-doc h2 { border-top: none; padding-top: 0; margin: 56px 0 16px; }
+.vp-doc h2 .header-anchor { top: 0; }
+
+/* B3 CJK long-form rhythm */
+.vp-doc p, .vp-doc li { line-height: 1.9; }
+
+/* B5 images sit on the paper with a hairline frame */
+.vp-doc img { border-radius: 8px; border: 1px solid var(--vp-c-divider); }
+
 /* medium-zoom backdrop blends with the theme */
 .medium-zoom-overlay {
   background: var(--vp-c-bg) !important;
   opacity: 0.96 !important;
 }
 .medium-zoom-image--opened {
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* images inside docs are clickable — hint with cursor */
@@ -176,4 +325,127 @@
   color: var(--vp-c-brand-1);
   letter-spacing: 0.01em;
   margin-left: 0.35em;
+}
+
+/* ghost slot: the no-link placeholder card reads as an empty seat, not a dead link */
+.VPHome .VPFeature:not(.link) { background-color: transparent; }
+
+/* ============================================================
+   Article Claude-ification round 4 (K3)
+   ============================================================ */
+
+/* P1-1 outline: quiet mono label + denser rows */
+.VPDocAsideOutline .outline-title {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--vp-c-text-2);
+}
+.VPDocOutlineItem .outline-link {
+  font-size: 13px;
+  line-height: 26px;
+}
+.VPDocOutlineItem .outline-link.active {
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+
+/* P1-2 certified line: badge chrome, not a generic quote */
+.vp-doc .reading-time + blockquote {
+  border-left: none;
+  padding-left: 0;
+  margin: 0 0 24px;
+}
+.vp-doc .reading-time + blockquote > p {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--vp-c-text-2);
+}
+
+/* P1-3 asides thin out; a blockquote right after a lone image is a caption */
+.vp-doc blockquote {
+  border-left: 1px solid var(--vp-c-divider);
+  padding-left: 14px;
+}
+.vp-doc blockquote > p {
+  font-size: 0.92em;
+  line-height: 1.8;
+  color: var(--vp-c-text-2);
+}
+.vp-doc p:has(> img:only-child) { margin-bottom: 10px; }
+.vp-doc p:has(> img:only-child) + blockquote {
+  border-left: none;
+  padding-left: 0;
+  margin-top: 0;
+  text-align: center;
+}
+.vp-doc p:has(> img:only-child) + blockquote > p { font-size: 12.5px; }
+
+/* P1-4 booktabs: horizontal hairlines only, no zebra, no grid */
+.vp-doc tr,
+.vp-doc tr:nth-child(2n) { background-color: transparent; }
+.vp-doc tr { border-top: none; }
+.vp-doc th,
+.vp-doc td {
+  border: none;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+.vp-doc th {
+  background-color: transparent;
+  font-size: 13px;
+}
+.vp-doc thead th {
+  border-bottom-color: color-mix(in srgb, var(--vp-c-text-2) 45%, transparent);
+}
+
+/* P1-5 pager: quiet hairline cards, serif title, coral only on hover */
+.VPDocFooter .pager-link { padding: 14px 18px; }
+.VPDocFooter .pager-link .desc {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+}
+.VPDocFooter .pager-link .title {
+  font-family: Georgia, 'Times New Roman', 'Noto Serif CJK SC',
+    'Source Han Serif SC', 'Songti SC', SimSun, serif;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--vp-c-text-1);
+}
+.VPDocFooter .pager-link:hover .title { color: var(--vp-c-brand-1); }
+@media (prefers-reduced-motion: no-preference) {
+  .VPDocFooter .pager-link .title { transition: color 0.25s ease, transform 0.25s ease; }
+  .VPDocFooter .pager-link.prev:hover .title { transform: translateX(-3px); }
+  .VPDocFooter .pager-link.next:hover .title { transform: translateX(3px); }
+}
+
+/* article lede: frontmatter summary between H1 and the meta line */
+.doc-lede {
+  margin: 8px 0 10px;
+  max-width: 36em;
+  font-size: 16.5px;
+  line-height: 1.75;
+  color: var(--vp-c-text-2);
+}
+
+/* P2-1 anchor jumps land below the fixed nav even without router takeover */
+@media (min-width: 960px) {
+  .vp-doc :where(h1, h2, h3, h4, h5, h6) {
+    scroll-margin-top: calc(var(--vp-nav-height) + 20px);
+  }
+}
+
+/* P2-2 iframe gets the same hairline frame + loading placeholder as images */
+.vp-doc iframe {
+  border: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg-soft);
+}
+
+/* P2-3 footer message joins the mono chrome voice */
+.VPFooter .message {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  color: var(--vp-c-text-2);
 }

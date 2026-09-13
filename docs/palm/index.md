@@ -119,7 +119,7 @@ OpenVLA 的参数是PALM的 100 倍，但所有参数均不具备感知**任务�
 
 重新聚焦开头那只对着葡萄再次伸手的机器人，PALM 没有让它变成电眼逼人的钢铁侠，只是让它终于知道自己在哪里、要去哪里——68M的小模型带不来物理AGI，但能让机器人**不再失忆**\
 long horizon task这块坚冰或许很难融化，但今天已经有凿子在正确的位置敲击。大模型的发展历来都是非线性的，我始终相信技术信仰坚定，对实现Physical AGI充满热忱的researcher们必然能够找到那条杀死比赛的通幽曲径\
-Maybe not today, but one day
+<span class="nb-cursive">Maybe not today, but one day</span>
 
 ---
 

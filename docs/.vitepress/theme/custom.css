@@ -264,6 +264,12 @@
 .vp-doc h2 { border-top: none; padding-top: 0; margin: 56px 0 16px; }
 .vp-doc h2 .header-anchor { top: 0; }
 
+/* book-chapter staircase: each heading level steps one notch right of its parent
+   (h1 page title stays flush; 12px per level) */
+.vp-doc h2 { padding-left: 0.75rem; }
+.vp-doc h3 { padding-left: 1.5rem; }
+.vp-doc h4 { padding-left: 2.25rem; }
+
 /* B3 CJK long-form rhythm */
 .vp-doc p, .vp-doc li { line-height: 1.9; }
 
@@ -332,14 +338,16 @@
 .vp-doc .cert-ico { display: inline-block; color: #c15f3c; vertical-align: -2px; }
 .dark .vp-doc .cert-ico { color: #e39a7c; }
 
-/* navbar title: "Joye's" serif + "Wiki" in Maple Mono cursive (iPhone-welcome mix) */
+/* cursive voice: "Wiki" in navbar, ending lines in articles (iPhone-welcome mix) */
 .nb-cursive {
   font-family: var(--vp-font-family-mono);
   font-style: italic;
   color: var(--vp-c-brand-1);
   letter-spacing: 0.01em;
-  margin-left: 0.35em;
 }
+
+/* the breathing gap belongs to the navbar brand only, not article body usage */
+.VPNavBarTitle .nb-cursive { margin-left: 0.35em; }
 
 /* ghost slot: the no-link placeholder card reads as an empty seat, not a dead link */
 .VPHome .VPFeature:not(.link) { background-color: transparent; }

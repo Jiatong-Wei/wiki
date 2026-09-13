@@ -471,3 +471,125 @@
   font-size: 12px;
   color: var(--vp-c-text-2);
 }
+
+/* ============================================================
+   Knowledge graph (aside widget + /graph/ full page)
+   颜色全走 CSS 变量，暗色模式自动成立；rel 不做视觉编码（K3 协议）
+   ============================================================ */
+
+.graph-widget {
+  margin-top: 4px;
+  padding: 10px 0 2px;
+  border-top: 1px solid var(--vp-c-divider);
+  font-size: 12px;
+}
+.graph-widget-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.graph-widget-title {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--vp-c-text-2);
+}
+.graph-widget-link {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  color: var(--vp-c-brand-1);
+  transition: color 0.25s;
+}
+.graph-widget-link:hover { color: var(--vp-c-brand-2); }
+.graph-widget .gv-svg { width: 100%; height: auto; }
+.graph-widget-caption {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--vp-c-text-2);
+  min-height: 2.9em;
+}
+
+/* nodes：written=coral 实心 · read=灰实心 · queued=空心（双编码防色盲） */
+.gv-svg .gv-node { transition: fill 0.2s, stroke 0.2s; }
+.gv-svg .gv-written { fill: var(--vp-c-brand-1); }
+.gv-svg .gv-read { fill: var(--vp-c-text-3); }
+.gv-svg .gv-queued { fill: var(--vp-c-bg); stroke: var(--vp-c-text-2); }
+.gv-svg .gv-node-on { stroke: var(--vp-c-brand-1); }
+
+.gv-svg .gv-dim { opacity: 0.28; }
+.gv-svg .gv-edge { stroke: var(--vp-c-divider); transition: stroke 0.2s, opacity 0.2s; }
+.gv-svg .gv-edge-on { stroke: var(--vp-c-brand-1); }
+.gv-svg .gv-hit { fill: transparent; cursor: pointer; }
+.gv-svg .gv-label {
+  font-family: var(--vp-font-family-mono);
+  fill: var(--vp-c-text-2);
+  paint-order: stroke;
+  stroke: var(--vp-c-bg);
+  stroke-width: 6px;
+}
+.gv-svg .gv-label-on { fill: var(--vp-c-brand-1); font-weight: 600; }
+.dark .gv-svg .gv-label { stroke: var(--vp-c-bg); }
+
+/* 入场：神经元生长——边先画出、节点后弹出（每会话一次，sessionStorage 门控） */
+.graph-widget-anim .gv-anim-edge {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: gv-edge-draw 0.7s ease-out forwards;
+}
+.graph-widget-anim .gv-anim {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gv-node-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+@keyframes gv-edge-draw { to { stroke-dashoffset: 0; } }
+@keyframes gv-node-pop {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 全图页 */
+.graph-full { margin: 24px 0; }
+.graph-full .gv-svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1000 / 760;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+}
+.graph-full .gv-label { font-size: 17px; }
+.graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-top: 12px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+}
+.graph-legend-chip { display: inline-flex; align-items: center; gap: 6px; }
+.graph-legend-chip::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.graph-legend .lg-written::before { background: var(--vp-c-brand-1); }
+.graph-legend .lg-read::before { background: var(--vp-c-text-3); }
+.graph-legend .lg-queued::before {
+  background: var(--vp-c-bg);
+  box-shadow: inset 0 0 0 1.5px var(--vp-c-text-2);
+}
+.graph-legend-sep { color: var(--vp-c-text-3); }
+
+/* 移动端补偿入口（<960px 无 aside） */
+.graph-mobile-entry { display: none; margin: 8px 0; }
+@media (max-width: 1279px) {
+  .graph-mobile-entry { display: block; font-family: var(--vp-font-family-mono); font-size: 13px; }
+  .graph-mobile-entry a { color: var(--vp-c-brand-1); }
+}

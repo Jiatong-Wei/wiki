@@ -8,6 +8,7 @@ const ORIGIN = 'https://jiatong-wei.github.io';
 
 // 其余五篇暂缓公开（内容 review 中），页面仍可直达 URL 访问，恢复即取消注释。
 export const posts: Array<{ link: string; text: string; desc: string; date: string }> = [
+  { link: 'palm/', text: '长程任务也要干净利落：PALM 浅谈', desc: '68M 小模型打 7B OpenVLA——VLA 长程失忆的一次拆解与复现', date: '2026-09-13' },
   { link: 'splat/', text: '高斯泼溅二三事', desc: '一个民间爱好者遇到一群民间爱好者', date: '2026-02-28' },
   // { link: 'isaac-report', text: '技术报告：在仿真里解剖一个抓取', desc: '五日弧封版：完整抓取 0 次，末端 0.54 → 0.094 m', date: '2026-08-29' },
   // { link: 'dagger-four-rounds', text: 'DAgger 四轮迭代：0.54 m → 0.094 m', desc: '教师逐帧重标注 + 聚合再训', date: '2026-08-28' },
@@ -104,6 +105,8 @@ export default defineConfig({
   // hand-rolled RSS + sitemap + static 404 at build time — no extra deps
   buildEnd({ outDir }) {
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    // dir-style links ('palm/') keep the slash (serves index.html); flat files take .html
+    const pageUrl = (link: string) => (link.endsWith('/') ? link : `${link}.html`);
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
 <title>Joye's Wiki</title>
@@ -113,8 +116,8 @@ ${posts
   .map(
     (p) => `  <item>
     <title>${esc(p.text)}</title>
-    <link>${ORIGIN}/wiki/${p.link}.html</link>
-    <guid>${ORIGIN}/wiki/${p.link}.html</guid>
+    <link>${ORIGIN}/wiki/${pageUrl(p.link)}</link>
+    <guid>${ORIGIN}/wiki/${pageUrl(p.link)}</guid>
     <pubDate>${new Date(p.date).toUTCString()}</pubDate>
     <description>${esc(p.desc)}</description>
   </item>`,
@@ -123,7 +126,7 @@ ${posts
 </channel></rss>`;
     writeFileSync(resolve(outDir, 'rss.xml'), rss);
 
-    const urls = ['', ...posts.map((p) => `${p.link}.html`)];
+    const urls = ['', ...posts.map((p) => pageUrl(p.link))];
     const today = new Date().toISOString().slice(0, 10);
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

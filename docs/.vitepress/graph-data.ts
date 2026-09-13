@@ -233,6 +233,105 @@ function computeLayout(): Record<string, { x: number; y: number }> {
 export const GRAPH_LAYOUT: Record<string, { x: number; y: number }> = computeLayout();
 export const GRAPH_SIZE = { w: W, h: H };
 
+// —— Obsidian 式活体引力：同一物理引擎（斥力 + 边弹簧 + 弱重力）在运行时
+//    每帧积分。从 GRAPH_LAYOUT 确定性起点出发微动，SSR 首帧零偏移。
+//    startLinkSim 客户端 onMounted 调用；返回句柄的 tick 后必须写回 DOM。——
+export interface LinkSimHandle {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  pos: Record<string, { x: number; y: number }>;
+  vel: Record<string, { x: number; y: number }>;
+  pinned: string | null;  // 拖拽中的节点 id：跳过积分不施力
+  tick: () => void;
+  drift: (id: string, x: number, y: number) => void;
+  wake: (id: string) => void;
+  strength: number;
+}
+
+export function startLinkSim(): LinkSimHandle {
+  const ids = GRAPH_NODES.map((n) => n.id);
+  const pos: Record<string, { x: number; y: number }> = {};
+  const vel: Record<string, { x: number; y: number }> = {};
+  for (const id of ids) {
+    pos[id] = { ...GRAPH_LAYOUT[id] };
+    vel[id] = { x: 0, y: 0 };
+  }
+  const idx = new Map(ids.map((id, i) => [id, i]));
+  const disp = ids.map(() => ({ x: 0, y: 0 }));
+  const k = Math.sqrt((W * H) / ids.length) * 1.5;
+  let energy = 0.55; // 初始有余温，入画即微动
+  let pinned: string | null = null;
+
+  function integrate(dt: number): void {
+    if (energy <= 0) return; // 冷却停机：wake/drift 抬 energy 自恢复
+    for (const d of disp) { d.x = 0; d.y = 0; }
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const A = pos[ids[i]], B = pos[ids[j]];
+        let dx = A.x - B.x, dy = A.y - B.y;
+        let dist2 = dx * dx + dy * dy;
+        if (dist2 < 1) { dx = 0.1; dy = 0.1; dist2 = 0.02; }
+        const dist = Math.sqrt(dist2);
+        const f = Math.min((k * k) / dist2, 40);
+        disp[i].x += (dx / dist) * f; disp[i].y += (dy / dist) * f;
+        disp[j].x -= (dx / dist) * f; disp[j].y -= (dy / dist) * f;
+      }
+    }
+    for (const e of GRAPH_EDGES) {
+      const A = pos[e.a], B = pos[e.b];
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+      const f = Math.min((dist - k) * 0.14, 30); // 弹簧到理想边长，不强拉
+      const ux = (dx / dist) * f, uy = (dy / dist) * f;
+      disp[idx.get(e.a)!].x += ux; disp[idx.get(e.a)!].y += uy;
+      disp[idx.get(e.b)!].x -= ux; disp[idx.get(e.b)!].y -= uy;
+    }
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      if (id === pinned) { vel[id].x = 0; vel[id].y = 0; continue; } // 钉住：不施力不位移
+      const p = pos[id], v = vel[id];
+      // 弱重力向心 + 冷却阻尼
+      disp[i].x += (W / 2 - p.x) * 0.006;
+      disp[i].y += (H / 2 - p.y) * 0.006;
+      v.x = (v.x + disp[i].x * dt) * 0.86;
+      v.y = (v.y + disp[i].y * dt) * 0.86;
+      p.x += v.x; p.y += v.y;
+      // 钳住，永远不出框
+      const m = 70;
+      p.x = Math.max(m, Math.min(W - m, p.x));
+      p.y = Math.max(m + 14, Math.min(H - m - 24, p.y));
+      // 速度归零阈值：冷却后停算
+      if (Math.abs(v.x) + Math.abs(v.y) < 0.02) { v.x = 0; v.y = 0; }
+    }
+    energy = Math.max(0, energy - dt * 0.006);
+  }
+
+  return {
+    nodes: GRAPH_NODES,
+    edges: GRAPH_EDGES,
+    pos,
+    vel,
+    get pinned() { return pinned; },
+    set pinned(id: string | null) { pinned = id; },
+    tick: () => integrate(1),
+    drift: (id, x, y) => {
+      const p = pos[id];
+      if (!p) return;
+      p.x = Math.max(70, Math.min(W - 70, p.x + x));
+      p.y = Math.max(84, Math.min(H - 94, p.y + y));
+      energy = Math.min(1, energy + 0.35);
+    },
+    wake: (id) => {
+      const v = vel[id];
+      if (!v) return;
+      v.x += (Math.random() - 0.5) * 6;
+      v.y += (Math.random() - 0.5) * 6;
+      energy = Math.min(1, energy + 0.5);
+    },
+    get strength() { return energy; },
+  };
+}
+
 export const REL_LABEL: Record<GraphRel, string> = {
   'builds-on': '先读',
   'uses': '用到',

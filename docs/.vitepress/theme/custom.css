@@ -593,3 +593,58 @@
   .graph-mobile-entry { display: block; font-family: var(--vp-font-family-mono); font-size: 13px; }
   .graph-mobile-entry a { color: var(--vp-c-brand-1); }
 }
+
+/* ============================================================
+   Left sidebar collapse（桌面收拢 sidebar，内容区/星图随之放大）
+   <960px 复用 VitePress 原生移动 overlay，无需此规则。
+   ============================================================ */
+.sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-right: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-divider);
+  background: transparent;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background-color 0.25s;
+}
+.sidebar-toggle-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
+.sidebar-toggle-btn.is-collapsed svg { transform: rotate(180deg); }
+.sidebar-toggle-btn svg { transition: transform 0.3s; }
+
+@media (min-width: 960px) {
+  /* 收拢：sidebar 从布局中移除，内容区独占 */
+  .sidebar-collapsed .VPSidebar { display: none; }
+  .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
+  .sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: 880px; }
+  /* 导航 title 不再给 sidebar 留列 */
+  .sidebar-collapsed .VPNavBar.has-sidebar .title { width: auto; padding-left: 16px; border-bottom: none; }
+}
+
+/* GraphFull 拖拽光标 */
+.gv-hit-drag { cursor: grab; }
+.gv-hit-drag:active { cursor: grabbing; }
+
+/* K3 P1-2：收起时同时收回 VPContent/VPNavBar 的左垫，内容区真正居中 */
+@media (min-width: 960px) {
+  .sidebar-collapsed .VPContent.has-sidebar { padding-left: 0; }
+  .sidebar-collapsed .VPNavBar.has-sidebar .content { padding-left: 0; }
+  .sidebar-collapsed .VPNavBar.has-sidebar .divider { padding-left: 0; }
+}
+@media (min-width: 1440px) {
+  .sidebar-collapsed .VPContent.has-sidebar { padding-right: 0; }
+  .sidebar-collapsed .VPNavBar.has-sidebar .content { padding-right: 0; }
+}
+/* 移动端隐藏收起按钮（交给原生 VPLocalNav） */
+@media (max-width: 959px) {
+  .sidebar-toggle-btn { display: none; }
+}
+/* P2-7：前庭敏感用户关掉永续漂移的入场动画（运行时 sim 的冷却停机已兜住主体） */
+@media (prefers-reduced-motion: reduce) {
+  .graph-widget-anim .gv-anim-edge,
+  .graph-widget-anim .gv-anim { animation: none; }
+}

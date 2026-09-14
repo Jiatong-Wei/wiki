@@ -213,8 +213,9 @@ const GraphAside = defineComponent({
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
     const simReady = ref(false);
-    // 缩放视窗：滚轮 zoom-at-point，zoom≥1.5 自动展开全部工作名
-    const view = ref<{ zoom: number; cx: number; cy: number }>({ zoom: 1, cx: 0, cy: 0 });
+    // 缩放视窗：滚轮 zoom-at-point，zoom≥1.5 自动展开全部工作名。
+    // 普通对象非响应式——渲染只走 pendingRender→tickId 管线（K3 P1-1）
+    const view = { zoom: 1, cx: 0, cy: 0 };
     // fixed 浮层几何：SVG 脱离侧栏的 overflow 裁切，向右下发展。
     // 左界锚 aside-container 左缘（硬钳防布局未稳期漂移），右界钳视口，
     // 高度参与公式（slice 模式星图纵向放大）。
@@ -228,6 +229,9 @@ const GraphAside = defineComponent({
     let svgEl: SVGSVGElement | null = null;
     // 空白平移：按下非节点处拖动 = pan 视窗（长按拖动看别处）
     let pan: { cx: number; cy: number; gx: number; gy: number } | null = null;
+    // 掉帧治本：鼠标事件只置 pending，渲染统一由 rAF loop 消费（≤60fps）
+    let pendingRender = false;
+    const requestRender = () => { pendingRender = true; };
     const clientToGraph = (ev: MouseEvent | TouchEvent): { x: number; y: number } | null => {
       if (!svgEl) return null;
       const rect = svgEl.getBoundingClientRect();
@@ -263,9 +267,9 @@ const GraphAside = defineComponent({
           const cyp = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
           const gx = vx0r + (cxp - rect.left) / scale;
           const gy = vy0r + (cyp - rect.top) / scale;
-          view.value.cx = pan.cx - (gx - pan.gx);
-          view.value.cy = pan.cy - (gy - pan.gy);
-          tickId.value++;
+          view.cx = pan.cx - (gx - pan.gx);
+          view.cy = pan.cy - (gy - pan.gy);
+          requestRender();
         }
         if ('touches' in ev) ev.preventDefault();
         return;
@@ -286,13 +290,14 @@ const GraphAside = defineComponent({
         if (e.a === dragId) sim.wake(e.b);
         if (e.b === dragId) sim.wake(e.a);
       }
-      tickId.value++; // 拖拽即时推帧（sim 可能处于冷却停机）
+      requestRender(); // rAF 消费：鼠标 125Hz 不再逐事件全量渲染
       if ('touches' in ev) ev.preventDefault();
     };
     const onUp = () => {
       dragId = null;
       pan = null;
       if (sim) sim.pinned = null;
+      requestRender(); // 松手终态确保渲染
       setTimeout(() => { dragMoved = false; }, 0);
     };
     // 滚轮缩放：以光标为锚 zoom-at-point；无需跳全图页看局部/整体
@@ -300,7 +305,7 @@ const GraphAside = defineComponent({
       if (!svgEl || !ev.deltaY) return; // P2-2：触控板横向滑 deltaY=0 不缩放
       ev.preventDefault();
       const f = ev.deltaY < 0 ? 1.14 : 1 / 1.14;
-      const v = view.value;
+      const v = view;
       const nz = Math.max(0.45, Math.min(3, v.zoom * f));
       const anchor = clientToGraph(ev);
       if (anchor) {
@@ -310,7 +315,7 @@ const GraphAside = defineComponent({
         v.cy = anchor.y - (anchor.y - v.cy) * k;
       }
       v.zoom = nz;
-      tickId.value++;
+      requestRender();
     };
     const place = () => {
       if (!holderEl) return;
@@ -350,8 +355,11 @@ const GraphAside = defineComponent({
         if (sim && !busy) {
           if (wasBusy) place(); // 过渡结束下降沿：aside 已平移，重锚浮层（K3 P0-2 双保险）
           sim.tick();
-          // 空闲门：能量归零且无交互时不再推帧（拖拽在 onMove 即时推帧）
-          if (sim.strength > 0 || hoveredId.value || dragId) tickId.value++;
+          // 空闲门：能量归零且无交互时不推帧；交互期 pending 由这里统一消费（≤60fps）
+          if (pendingRender || sim.strength > 0 || hoveredId.value || dragId) {
+            pendingRender = false;
+            tickId.value++;
+          }
         }
         wasBusy = busy;
         raf = requestAnimationFrame(loop);
@@ -361,7 +369,7 @@ const GraphAside = defineComponent({
         animate.value = false;
         caption.value = '';
         hoveredId.value = null; // 跨路由清 hover 残留
-        view.value = { zoom: 1, cx: 0, cy: 0 }; // K3 P1-1：重置缩放，新文章中心不缺位
+        view.zoom = 1; view.cx = 0; view.cy = 0; // K3 P1-1：重置缩放，新文章中心不缺位
         nextTick(place); // 路由切换后 aside 位置可能变，重锚浮层
       });
     });
@@ -397,7 +405,7 @@ const GraphAside = defineComponent({
         const bx0 = Math.min(...xs) - pad, by0 = Math.min(...ys) - pad;
         const bv = { vx0: bx0, vy0: by0, vw: Math.max(...xs) + pad - bx0, vhh: Math.max(...ys) + pad - by0 };
         boxView.value = bv;
-        view.value = { zoom: 1, cx: bv.vx0 + bv.vw / 2, cy: bv.vy0 + bv.vhh / 2 };
+        view.cx = bv.vx0 + bv.vw / 2; view.cy = bv.vy0 + bv.vhh / 2;
       }
       const { vx0, vy0, vw, vhh } = boxView.value;
       const hid = hoveredId.value;
@@ -472,7 +480,7 @@ const GraphAside = defineComponent({
       // slice 纵向放大星图（向下方发展）；高度受限档降级 meet 防裁掉底部节点（K3 P1-2）
       const par = fb && fb.height >= fb.width * 0.876 ? 'xMidYMin slice' : 'xMidYMid meet';
       // 缩放视窗：view.center/zoom 变换冻结 bbox（初始化在 boxView 中心）
-      const vv = view.value;
+      const vv = view;
       const zvx = vv.cx - (vw / 2) / vv.zoom, zvy = vv.cy - (vhh / 2) / vv.zoom;
       const zvw = vw / vv.zoom, zvhh = vhh / vv.zoom;
       // 标签阈值：放大看局部（zoom≥1.5）显全部工作名，看全局只留当前文章名
@@ -494,7 +502,7 @@ const GraphAside = defineComponent({
           const scale = rect.width / vwr;
           const cxp = 'touches' in ev ? (ev as unknown as TouchEvent).touches[0].clientX : ev.clientX;
           const cyp = 'touches' in ev ? (ev as unknown as TouchEvent).touches[0].clientY : ev.clientY;
-          pan = { cx: view.value.cx, cy: view.value.cy, gx: vx0r + (cxp - rect.left) / scale, gy: vy0r + (cyp - rect.top) / scale };
+          pan = { cx: view.cx, cy: view.cy, gx: vx0r + (cxp - rect.left) / scale, gy: vy0r + (cyp - rect.top) / scale };
           ev.preventDefault();
         },
       }, [
@@ -539,6 +547,11 @@ const GraphFull = defineComponent({
     const caption = ref('');
     const hoveredId = ref<string | null>(null);
     const tickId = ref(0);
+    // 缩放/平移视窗 + rAF 渲染节流。view 是普通对象（非响应式）：
+    // mutate 不触发逐事件渲染，统一走 pendingRender→loop→tickId 管线（K3 P1-1）
+    const view = { zoom: 1, cx: 500, cy: 380 };
+    let panF: { cx: number; cy: number; gx: number; gy: number } | null = null;
+    let pendingRender = false;
 
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
@@ -551,13 +564,33 @@ const GraphFull = defineComponent({
     const clientToGraph = (ev: MouseEvent | TouchEvent): { x: number; y: number } | null => {
       if (!svgEl) return null;
       const rect = svgEl.getBoundingClientRect();
+      const raw = svgEl.getAttribute('viewBox');
+      if (!raw) return null;
+      const [vx0, vy0, vw, vh] = raw.split(/\s+/).map(Number);
       const cx = 'touches' in ev ? ev.touches[0].clientX : ev.clientX;
       const cy = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
-      const scale = 1000 / rect.width;
-      return { x: (cx - rect.left) * scale, y: (cy - rect.top) * (760 / rect.height) };
+      const scale = Math.max(rect.width / vw, rect.height / vh); // 满框 aspect 匹配，max≈min
+      const offX = (vw - rect.width / scale) / 2, offY = (vh - rect.height / scale) / 2;
+      return { x: vx0 + offX + (cx - rect.left) / scale, y: vy0 + offY + (cy - rect.top) / scale };
+    };
+    // 滚轮缩放：锚点守恒 k=旧/新；clamp 0.45~3
+    const onWheelF = (ev: WheelEvent) => {
+      if (!svgEl || !ev.deltaY) return;
+      ev.preventDefault();
+      const f = ev.deltaY < 0 ? 1.14 : 1 / 1.14;
+      const v = view;
+      const nz = Math.max(0.45, Math.min(3, v.zoom * f));
+      const anchor = clientToGraph(ev);
+      if (anchor) {
+        const k = v.zoom / nz;
+        v.cx = anchor.x - (anchor.x - v.cx) * k;
+        v.cy = anchor.y - (anchor.y - v.cy) * k;
+      }
+      v.zoom = nz;
+      pendingRender = true;
     };
     const onMove = (ev: MouseEvent | TouchEvent) => {
-      if (pan && !dragId && svgEl) {
+      if (panF && !dragId && svgEl) {
         // pan：client 位移换算图单位，反向移动视窗中心
         const rect = svgEl.getBoundingClientRect();
         const raw = svgEl.getAttribute('viewBox');
@@ -566,11 +599,9 @@ const GraphFull = defineComponent({
           const scale = rect.width / vwr;
           const cxp = 'touches' in ev ? ev.touches[0].clientX : ev.clientX;
           const cyp = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
-          const gx = vx0r + (cxp - rect.left) / scale;
-          const gy = vy0r + (cyp - rect.top) / scale;
-          view.value.cx = pan.cx - (gx - pan.gx);
-          view.value.cy = pan.cy - (gy - pan.gy);
-          tickId.value++;
+          view.cx = panF.cx - ((vx0r + (cxp - rect.left) / scale) - panF.gx);
+          view.cy = panF.cy - ((vy0r + (cyp - rect.top) / scale) - panF.gy);
+          pendingRender = true;
         }
         if ('touches' in ev) ev.preventDefault();
         return;
@@ -580,18 +611,22 @@ const GraphFull = defineComponent({
       if (!g) return;
       const dx = g.x - dragStart.x, dy = g.y - dragStart.y;
       if (!dragMoved && Math.hypot(dx, dy) > 5) dragMoved = true;
-      sim.pos[dragId].x = g.x;
-      sim.pos[dragId].y = g.y;
+      // 钳画布边界内缩：pinned 节点跳过 integrate 的 clamp，这里补（K3 P1-3）
+      sim.pos[dragId].x = Math.max(70, Math.min(930, g.x));
+      sim.pos[dragId].y = Math.max(84, Math.min(666, g.y));
       // 拖拽中 pin 跳过积分；wake 邻居抬能量让周围跟上（不灌速度给被拖节点）
       for (const e of GRAPH_EDGES) {
         if (e.a === dragId) sim.wake(e.b);
         if (e.b === dragId) sim.wake(e.a);
       }
+      pendingRender = true;
       if ('touches' in ev) ev.preventDefault();
     };
     const onUp = () => {
       dragId = null;
+      panF = null;
       if (sim) sim.pinned = null;
+      pendingRender = true;
       // click 守卫：拖拽结束的 click 事件在 setTimeout 后清，避免松手跳链
       setTimeout(() => { dragMoved = false; }, 0);
     };
@@ -603,8 +638,11 @@ const GraphFull = defineComponent({
       const loop = () => {
         if (sim && !layoutBusyF()) {
           sim.tick();
-          // 空闲门：能量归零且无拖拽悬停时不推帧（掉帧治本：不与布局过渡抢主线程）
-          if (sim.strength > 0 || hoveredId.value || dragId) tickId.value++;
+          // 空闲门 + 交互 pending 统一 rAF 消费（鼠标事件不逐次触发全量渲染）
+          if (pendingRender || sim.strength > 0 || hoveredId.value || dragId) {
+            pendingRender = false;
+            tickId.value++;
+          }
         }
         raf = requestAnimationFrame(loop);
       };
@@ -632,6 +670,8 @@ const GraphFull = defineComponent({
       const hid = hoveredId.value;
       const S = { r: 7, label: 15, labelGap: 13, queuedSW: 2.2, focusSW: 2.6, edge: 1.6 };
 
+      const fv = view; // 当前视窗（zoom 变换后）
+      const fzvx = fv.cx - 500 / fv.zoom, fzvw = 1000 / fv.zoom;
       const renderEdge = (e: any) => {
         const A = pos[e.a], B = pos[e.b];
         const on = hid !== null && (hid === e.a || hid === e.b);
@@ -653,7 +693,7 @@ const GraphFull = defineComponent({
         })];
         const halfLab = (n.label.length * S.label * 0.6) / 2;
         inner.push(h('text', {
-          x: Math.max(halfLab + 6, Math.min(1000 - halfLab - 6, p.x)),
+          x: Math.max(fzvx + halfLab + 6, Math.min(fzvx + fzvw - halfLab - 6, p.x)),
           y: p.y + S.labelGap,
           class: ['gv-label', isHover ? 'gv-label-on' : '', dim ? 'gv-dim' : ''],
           'text-anchor': 'middle', 'font-size': S.label,
@@ -699,8 +739,16 @@ const GraphFull = defineComponent({
       return h('div', { class: 'graph-full' }, [
         h('svg', {
           ref: (el: any) => { svgEl = el; },
-          viewBox: '0 0 1000 760', class: 'gv-svg', role: 'img',
-          'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
+          viewBox: `${view.cx - 500 / view.zoom} ${view.cy - 380 / view.zoom} ${1000 / view.zoom} ${760 / view.zoom}`,
+          class: 'gv-svg', role: 'img',
+          'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读；滚轮缩放，空白拖动平移',
+          onWheel: (ev: WheelEvent) => onWheelF(ev),
+          onMousedown: (ev: MouseEvent) => {
+            if (dragId || !svgEl) return; // 节点拖拽自理；空白启动平移
+            const g = clientToGraph(ev);
+            if (g) panF = { cx: view.cx, cy: view.cy, gx: g.x, gy: g.y };
+            ev.preventDefault();
+          },
         }, [
           h('title', {}, 'graph'),
           ...edges.map(renderEdge).filter(Boolean),

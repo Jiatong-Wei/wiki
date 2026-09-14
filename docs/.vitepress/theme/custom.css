@@ -503,12 +503,14 @@
   transition: color 0.25s;
 }
 .graph-widget-link:hover { color: var(--vp-c-brand-2); }
-.graph-widget .gv-svg {
-  width: 132%;
-  max-width: none;
-  height: auto;
-  margin-right: -34%; /* 出格：越过目录右缘 */
+.graph-float-holder { width: 100%; }
+.graph-float {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none; /* 容器穿透，不遮正文点击 */
 }
+.graph-float .gv-svg { width: 100%; height: auto; }
+.graph-float .gv-hit, .graph-float a { pointer-events: auto; }
 .graph-widget-caption {
   margin: 2px 0 0;
   font-size: 11.5px;
@@ -623,6 +625,9 @@
 }
 .sidebar-toggle-btn:hover { color: var(--vp-c-text-1); background: var(--vp-c-default-soft); }
 .sidebar-toggle-btn:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 2px; }
+/* 状态条 = 侧栏缩影：展开时竖线左侧深色，收起时透明 */
+.sidebar-toggle-btn:not(.is-collapsed) .btn-side { fill: var(--vp-c-text-1); stroke: none; }
+.sidebar-toggle-btn.is-collapsed .btn-side { fill: transparent; }
 
 @media (min-width: 960px) {
   /* 收拢：sidebar 滑出视口（transform 可插值，display 不行） */
@@ -639,7 +644,7 @@
   .VPNavBar .title { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
-  .graph-page.sidebar-collapsed .VPDoc.has-sidebar .container { max-width: min(94vw, 1400px); }
+  .graph-page.sidebar-collapsed .VPDoc.has-sidebar .container { max-width: min(90vw, 1200px); }
   .sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: 880px; }
   /* 重叠修复：title 从 absolute 收进流，content 左垫随之清零（不再骑脸 Search） */
   .sidebar-collapsed .VPNavBar.has-sidebar .title {
@@ -652,9 +657,9 @@
 /* graph 全图页占满版心（GraphFull 挂载时 html 打 graph-page 类） */
 @media (min-width: 960px) {
   .graph-page .VPDoc.has-aside .aside { display: none; }
-  .graph-page .VPDoc .content-container { max-width: min(92vw, 1280px) !important; }
-  .graph-page .VPDoc.has-sidebar .content-container { max-width: min(92vw, 1280px) !important; }
-  .graph-page.sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: min(94vw, 1400px) !important; }
+  .graph-page .VPDoc .content-container { max-width: min(88vw, 1080px) !important; }
+  .graph-page .VPDoc.has-sidebar .content-container { max-width: min(88vw, 1080px) !important; }
+  .graph-page.sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: min(90vw, 1200px) !important; }
 }
 
 /* GraphFull 拖拽光标 */

@@ -193,6 +193,15 @@ const GraphAside = defineComponent({
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
     const simReady = ref(false);
+    // fixed 浮层几何：SVG 脱离侧栏的 overflow 裁切，向正文方向出格
+    const floatBox = ref<{ left: number; top: number; width: number } | null>(null);
+    let holderEl: HTMLElement | null = null;
+    const place = () => {
+      if (!holderEl) return;
+      const r = holderEl.getBoundingClientRect();
+      const width = Math.round(Math.min(r.width * 1.5, window.innerWidth - r.left - 14));
+      floatBox.value = { left: Math.round(r.left), top: Math.round(r.top), width };
+    };
     onMounted(() => {
       try {
         if (!sessionStorage.getItem('graph-grew')) {
@@ -202,6 +211,8 @@ const GraphAside = defineComponent({
       } catch { /* 存储被禁用时静默降级 */ }
       sim = startLinkSim();
       simReady.value = true; // ref 触发重渲染，不靠裸变量时机
+      nextTick(place);
+      window.addEventListener('resize', place);
       const loop = () => {
         if (sim) {
           sim.tick();
@@ -215,9 +226,13 @@ const GraphAside = defineComponent({
         animate.value = false;
         caption.value = '';
         hoveredId.value = null; // 跨路由清 hover 残留
+        nextTick(place); // 路由切换后 aside 位置可能变，重锚浮层
       });
     });
-    onBeforeUnmount(() => { cancelAnimationFrame(raf); });
+    onBeforeUnmount(() => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', place);
+    });
 
     return () => {
       const c = center.value;
@@ -285,20 +300,36 @@ const GraphAside = defineComponent({
         ]);
       };
 
+      const fb = floatBox.value;
+      const svgRatio = vhh / vw;
+      const holderStyle = fb
+        ? { width: '100%', height: `${Math.round(fb.width * svgRatio)}px` }
+        : { width: '100%', height: '190px' };
+      const svg = h('svg', {
+        viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
+        role: 'img',
+        'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
+      }, [
+        h('title', {}, 'graph'),
+        ...edges.map(renderEdge).filter(Boolean),
+        ...nodes.map(renderNode),
+      ]);
       return h('div', { class: ['graph-widget', animate.value ? 'graph-widget-anim' : ''] }, [
         h('div', { class: 'graph-widget-head' }, [
           h('span', { class: 'graph-widget-title' }, 'graph'),
           h('a', { class: 'graph-widget-link', href: withBase('/graph/') }, '全图 →'),
         ]),
-        h('svg', {
-          viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
-          role: 'img',
-          'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
-        }, [
-          h('title', {}, 'graph'),
-          ...edges.map(renderEdge).filter(Boolean),
-          ...nodes.map(renderNode),
-        ]),
+        h('div', {
+          ref: (el: any) => { holderEl = el as HTMLElement; },
+          class: 'graph-float-holder',
+          style: holderStyle,
+        }),
+        fb
+          ? h('div', {
+              class: 'graph-float',
+              style: `left:${fb.left}px; top:${fb.top}px; width:${fb.width}px;`,
+            }, [svg])
+          : null,
         h('p', { class: 'graph-widget-caption', 'aria-live': 'polite' },
           caption.value ||
             `${GRAPH_NODES.length} 个工作 · ${GRAPH_EDGES.length} 条链 · 悬停看简介，coral 实心可点进文章`),
@@ -515,8 +546,10 @@ const SidebarToggle = defineComponent({
         title: collapsed.value ? '展开侧边栏' : '收起侧边栏',
         'aria-label': '收起或展开左侧导航栏',
       }, [
-        // Cursor/VS Code 同款 layout-sidebar：外框面板 + 左侧分隔（侧栏区）
+        // Cursor/VS Code 同款 layout-sidebar：外框面板 + 左侧分隔（侧栏区）。
+        // btn-side 状态条 = 侧栏缩影：展开时深色填充，收起时透明
         h('svg', { viewBox: '0 0 16 16', width: 17, height: 17, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+          h('rect', { class: 'btn-side', x: '2.25', y: '3.25', width: '4', height: '9.5', rx: '1.2' }),
           h('rect', { x: '2.25', y: '3.25', width: '11.5', height: '9.5', rx: '1.75' }),
           h('path', { d: 'M6.25 3.25v9.5' }),
         ]),

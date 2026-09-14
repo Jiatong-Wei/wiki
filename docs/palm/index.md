@@ -1,6 +1,6 @@
 ---
 title: 长程任务也要干净利落：PALM 浅谈
-summary: 68M 小模型打 7B OpenVLA——affordance reasoning 与 progress aware 如何治 VLA 的长程失忆
+summary: 68M 小模型打 7B OpenVLA，真的假的？
 date: 2026-09-13
 ---
 

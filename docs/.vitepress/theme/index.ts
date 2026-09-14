@@ -4,7 +4,7 @@ import { useRoute, useData, withBase } from 'vitepress';
 import { useSidebar } from 'vitepress/theme';
 import './custom.css';
 import { captionFor } from './GraphView';
-import { GRAPH_NODES, GRAPH_EDGES, STATE_LABEL, startLinkSim } from '../graph-data';
+import { GRAPH_NODES, GRAPH_EDGES, STATE_LABEL, startLinkSim, GRAPH_LAYOUT } from '../graph-data';
 
 // top reading-progress bar
 const ProgressBar = defineComponent({
@@ -197,8 +197,57 @@ const GraphAside = defineComponent({
     // 左界锚 aside-container 左缘（硬钳防布局未稳期漂移），右界钳视口，
     // 高度参与公式（slice 模式星图纵向放大）。
     const floatBox = ref<{ left: number; top: number; width: number; height: number } | null>(null);
+    const boxView = ref<{ vx0: number; vy0: number; vw: number; vhh: number } | null>(null);
     let holderEl: HTMLElement | null = null;
     let asideEl: HTMLElement | null = null;
+    let dragId: string | null = null;
+    let dragMoved = false;
+    let dragStart = { x: 0, y: 0 };
+    let svgEl: SVGSVGElement | null = null;
+    const clientToGraph = (ev: MouseEvent | TouchEvent): { x: number; y: number } | null => {
+      if (!svgEl) return null;
+      const rect = svgEl.getBoundingClientRect();
+      const vb = boxView.value;
+      const fb = floatBox.value;
+      if (!vb || !fb) return null;
+      // 档位感知换算（K3 P1-1）：slice=max+xMid+yMin（y 顶对齐）；meet=min+双轴居中。
+      // 档位判定与 render 的 par 一致
+      const sliceMode = fb.height >= fb.width * 0.876;
+      const scale = sliceMode
+        ? Math.max(rect.width / vb.vw, rect.height / vb.vhh)
+        : Math.min(rect.width / vb.vw, rect.height / vb.vhh);
+      const offX = (vb.vw - rect.width / scale) / 2; // xMid 两档都居中
+      const offY = sliceMode ? 0 : (vb.vhh - rect.height / scale) / 2;
+      return {
+        x: vb.vx0 + offX + (('touches' in ev ? ev.touches[0].clientX : ev.clientX) - rect.left) / scale,
+        y: vb.vy0 + offY + (('touches' in ev ? ev.touches[0].clientY : ev.clientY) - rect.top) / scale,
+      };
+    };
+    const onMove = (ev: MouseEvent | TouchEvent) => {
+      if (!dragId || !sim) return;
+      const g = clientToGraph(ev);
+      if (!g) return;
+      if (!dragMoved && Math.hypot(g.x - dragStart.x, g.y - dragStart.y) > 6) dragMoved = true;
+      // 钳进冻结视窗（内缩 30）：拖拽可越出浮层但节点不出窗消失（K3 P1-2）
+      const bv = boxView.value;
+      if (bv) {
+        g.x = Math.max(bv.vx0 + 30, Math.min(bv.vx0 + bv.vw - 30, g.x));
+        g.y = Math.max(bv.vy0 + 30, Math.min(bv.vy0 + bv.vhh - 30, g.y));
+      }
+      sim.pos[dragId].x = g.x;
+      sim.pos[dragId].y = g.y;
+      for (const e of GRAPH_EDGES) {
+        if (e.a === dragId) sim.wake(e.b);
+        if (e.b === dragId) sim.wake(e.a);
+      }
+      tickId.value++; // 拖拽即时推帧（sim 可能处于冷却停机）
+      if ('touches' in ev) ev.preventDefault();
+    };
+    const onUp = () => {
+      dragId = null;
+      if (sim) sim.pinned = null;
+      setTimeout(() => { dragMoved = false; }, 0);
+    };
     const place = () => {
       if (!holderEl) return;
       const aside = document.querySelector('.aside-container') as HTMLElement | null;
@@ -206,8 +255,8 @@ const GraphAside = defineComponent({
       const ar = aside?.getBoundingClientRect();
       // 左界：aside 左缘（比 holder 稳，水合早期 holder 可能漂）
       const left = Math.max(Math.round(ar?.left ?? hr.left), Math.round(hr.left) - 4);
-      // 右界：视口右缘留 14px；宽度 cap 侧栏宽的 1.5 倍
-      const width = Math.max(200, Math.min(Math.round((ar?.width ?? hr.width) * 1.5), window.innerWidth - left - 14));
+      // 右界：视口右缘留 14px；宽度 cap 侧栏宽的 1.85 倍
+      const width = Math.max(200, Math.min(Math.round((ar?.width ?? hr.width) * 1.85), window.innerWidth - left - 14));
       // 下界发展：高度吃掉视口剩余（cap 宽的 0.98，slice 会纵向放大星图）
       const height = Math.min(window.innerHeight - hr.top - 14, Math.round(width * 0.98));
       floatBox.value = { left, top: Math.round(hr.top), width, height: Math.max(160, height) };
@@ -223,6 +272,10 @@ const GraphAside = defineComponent({
       simReady.value = true; // ref 触发重渲染，不靠裸变量时机
       nextTick(place);
       window.addEventListener('resize', place);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
       // aside 是 fixed + 自身滚动：长目录把 widget 顶出视口后，内部滚动也移动 holder（K3 P1-1）
       asideEl = document.querySelector('.aside-container');
       asideEl?.addEventListener('scroll', place, { passive: true });
@@ -233,8 +286,8 @@ const GraphAside = defineComponent({
         if (sim && !busy) {
           if (wasBusy) place(); // 过渡结束下降沿：aside 已平移，重锚浮层（K3 P0-2 双保险）
           sim.tick();
-          // 空闲门：能量归零且无交互时不再推帧（画面静止，重渲染恒等）
-          if (sim.strength > 0 || hoveredId.value) tickId.value++;
+          // 空闲门：能量归零且无交互时不再推帧（拖拽在 onMove 即时推帧）
+          if (sim.strength > 0 || hoveredId.value || dragId) tickId.value++;
         }
         wasBusy = busy;
         raf = requestAnimationFrame(loop);
@@ -250,6 +303,10 @@ const GraphAside = defineComponent({
     onBeforeUnmount(() => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', place);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
       asideEl?.removeEventListener('scroll', place);
     });
 
@@ -266,14 +323,18 @@ const GraphAside = defineComponent({
       const nodes = sim.nodes;
       const edges = sim.edges;
       const pos = sim.pos;
-      // compact bbox 视窗
-      const xs = nodes.map((n) => pos[n.id].x);
-      const ys = nodes.map((n) => pos[n.id].y);
-      const pad = 46;
-      const vx0 = Math.min(...xs) - pad, vy0 = Math.min(...ys) - pad;
-      const vw = Math.max(...xs) + pad - vx0, vhh = Math.max(...ys) + pad - vy0;
+      // compact 视窗冻结在确定性布局 bbox：漂移后不重算（动态视窗随节点抖动，
+      // 观感是"节点忽隐忽现"）；pad 60 给漂移留余量，出窗节点可拖回
+      if (!boxView.value) {
+        const xs = nodes.map((n) => GRAPH_LAYOUT[n.id]?.x ?? pos[n.id].x);
+        const ys = nodes.map((n) => GRAPH_LAYOUT[n.id]?.y ?? pos[n.id].y);
+        const pad = 60;
+        const bx0 = Math.min(...xs) - pad, by0 = Math.min(...ys) - pad;
+        boxView.value = { vx0: bx0, vy0: by0, vw: Math.max(...xs) + pad - bx0, vhh: Math.max(...ys) + pad - by0 };
+      }
+      const { vx0, vy0, vw, vhh } = boxView.value;
       const hid = hoveredId.value;
-      const S = { r: 9, label: 22, queuedSW: 3, focusSW: 3.2, edge: 2.8 };
+      const S = { r: 9, label: 24, queuedSW: 3, focusSW: 3.2, edge: 2.8 };
 
       const renderEdge = (e: any) => {
         const A = pos[e.a], B = pos[e.b];
@@ -305,14 +366,32 @@ const GraphAside = defineComponent({
           }, n.label));
         }
         inner.push(h('circle', {
-          cx: p.x, cy: p.y, r: 26, class: 'gv-hit',
+          cx: p.x, cy: p.y, r: 28, class: 'gv-hit gv-hit-drag',
+          onMousedown: (ev: MouseEvent) => {
+            dragId = n.id;
+            dragMoved = false;
+            const g = clientToGraph(ev);
+            if (g) dragStart = g;
+            if (sim) sim.pinned = n.id; // 钉住：拖拽不被弹簧拽离光标
+            ev.preventDefault();
+          },
+          onTouchstart: (ev: TouchEvent) => {
+            dragId = n.id;
+            dragMoved = false;
+            const g = clientToGraph(ev);
+            if (g) dragStart = g;
+            if (sim) sim.pinned = n.id;
+          },
           onMouseenter: () => {
             hoveredId.value = n.id;
             caption.value = captionFor(n, c.id);
             sim?.wake(n.id); // 摇醒邻居
           },
           onMouseleave: () => { hoveredId.value = null; caption.value = ''; },
-          onClick: () => { if (n.state !== 'written') caption.value = `「${n.label}」${STATE_LABEL[n.state]} — ${n.note}`; },
+          onClick: (ev: MouseEvent) => {
+            if (dragMoved) { ev.preventDefault(); ev.stopPropagation(); return; }
+            if (n.state !== 'written') caption.value = `「${n.label}」${STATE_LABEL[n.state]} — ${n.note}`;
+          },
         }));
         return h('g', { key: n.id }, [
           n.state === 'written' && n.article ? h('a', { href: withBase(n.article) }, inner) : inner,
@@ -326,6 +405,7 @@ const GraphAside = defineComponent({
       // slice 纵向放大星图（向下方发展）；高度受限档降级 meet 防裁掉底部节点（K3 P1-2）
       const par = fb && fb.height >= fb.width * 0.876 ? 'xMidYMin slice' : 'xMidYMid meet';
       const svg = h('svg', {
+        ref: (el: any) => { svgEl = el as SVGSVGElement; },
         viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
         preserveAspectRatio: par,
         role: 'img',
@@ -352,9 +432,13 @@ const GraphAside = defineComponent({
               style: `left:${fb.left}px; top:${fb.top}px; width:${fb.width}px; height:${fb.height}px;`,
             }, [svg])
           : null,
-        h('p', { class: 'graph-widget-caption', 'aria-live': 'polite' },
-          caption.value ||
-            `${GRAPH_NODES.length} 个工作 · ${GRAPH_EDGES.length} 条链 · 悬停看简介，coral 实心可点进文章`),
+        caption.value
+          ? h('p', { class: 'graph-widget-caption', 'aria-live': 'polite' }, caption.value)
+          : h('div', { class: 'graph-legend graph-legend-aside' }, [
+              h('span', { class: 'graph-legend-chip lg-written' }, '已写'),
+              h('span', { class: 'graph-legend-chip lg-read' }, '已读'),
+              h('span', { class: 'graph-legend-chip lg-queued' }, '待读'),
+            ]),
       ]);
     };
   },

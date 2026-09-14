@@ -504,6 +504,22 @@
 }
 .graph-widget-link:hover { color: var(--vp-c-brand-2); }
 .graph-float-holder { width: 100%; }
+
+/* 右栏放宽（用户点单：目录与星图都再大一点）——覆盖 VitePress 默认 224/256 */
+@media (min-width: 1280px) {
+  :root .VPDoc .aside.aside { max-width: 296px; }
+  :root .aside-container { width: 260px; }
+  :root .VPDoc.has-aside .content-container { max-width: 672px; } /* 正文微收，给 aside 让位 */
+}
+
+/* 侧栏图例：与 /graph/ 页同款 chip，紧凑排列（.graph-legend.graph-legend-aside
+   双类提特异性——声明在基类前，单类会被基类的 gap/margin/font-size 覆盖） */
+.graph-legend.graph-legend-aside {
+  display: flex;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  font-size: 11.5px;
+}
 .graph-float {
   position: fixed;
   z-index: 30;

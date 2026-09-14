@@ -356,8 +356,9 @@
    Article Claude-ification round 4 (K3)
    ============================================================ */
 
-/* P1-1 outline: Maple Mono + 宽松行距（高 DPI 屏：13px 太挤太丑） */
-.VPDocOutlineItem .outline-link {
+/* P1-1 outline: Maple Mono + 宽松行距（高 DPI 屏：13px 太挤太丑）。
+   :root 抬特异性——VitePress 自带 3 类选择器压过裸 2 类 */
+:root .VPDocOutlineItem .outline-link {
   font-family: var(--vp-font-family-mono);
   font-size: 13.5px;
   line-height: 1.9;
@@ -502,7 +503,7 @@
 
 /* 目录字号放大（高 DPI 屏点单：13px 在 2.5K 屏太小） */
 .VPDocAsideOutline .outline-link { font-size: 14px; line-height: 1.5; }
-.VPDocAsideOutline .outline-title { font-size: 13.5px; }
+:root .VPDocAsideOutline .outline-title { font-size: 13.5px; }
 
 /* 右栏放宽（用户点单：目录与星图都再大一点）——覆盖 VitePress 默认 224/256 */
 @media (min-width: 1280px) {
@@ -671,8 +672,13 @@
 }
 @media (min-width: 960px) {
   /* 展开态锚定 sidebar-expanded：覆盖了收起态的 max-width:0（类切换过渡靠它连续插值） */
-  html.sidebar-expanded .VPNavBar.has-sidebar .title { max-width: var(--vp-sidebar-width); overflow: hidden; }
-  html.sidebar-collapsed .VPNavBar.has-sidebar .title { max-width: 0; opacity: 0; pointer-events: none; }
+  /* 展开/收起两态都带 transition：往返都有连续插值 */
+  html.sidebar-expanded .VPNavBar.has-sidebar .title,
+  html.sidebar-collapsed .VPNavBar.has-sidebar .title {
+    transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  }
+  html.sidebar-expanded .VPNavBar.has-sidebar .title { max-width: var(--vp-sidebar-width); opacity: 1; }
+  html.sidebar-collapsed .VPNavBar.has-sidebar .title { max-width: 0; opacity: 0; pointer-events: none; overflow: hidden; }
 }
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }

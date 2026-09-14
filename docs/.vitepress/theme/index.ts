@@ -811,10 +811,13 @@ const SidebarToggle = defineComponent({
         // 布局尘埃落定后重锚浮层：收放使 aside 横移，place 只在 resize/路由时跑（K3 P0-2）
         window.dispatchEvent(new Event('resize'));
       }, 480);
-      try { localStorage.setItem('wiki-sidebar-collapsed', collapsed.value ? '1' : '0'); } catch { /* ignore */ }
+      try { localStorage.setItem('wiki-sidebar-collapsed-v2', collapsed.value ? '1' : '0'); } catch { /* ignore */ }
     };
     onMounted(() => {
-      try { collapsed.value = localStorage.getItem('wiki-sidebar-collapsed') === '1'; } catch { /* ignore */ }
+      try {
+        // v2 旧 key 可能是测试残留——只认当前 key，旧的忽略
+        collapsed.value = localStorage.getItem('wiki-sidebar-collapsed-v2') === '1';
+      } catch { /* ignore */ }
       apply();
       watch(() => route.path, () => nextTick(apply));
     });

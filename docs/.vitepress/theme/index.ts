@@ -439,7 +439,7 @@ const GraphAside = defineComponent({
           'stroke-width': n.state === 'queued' ? (isHover ? S.focusSW : S.queuedSW) : isHover ? S.focusSW : 0,
         })];
         if (showLabel) {
-          const halfLab = (n.label.length * labSize * 0.6) / 2;
+          const halfLab = (n.label.length * labSize * 0.95) / 2; // CJK 实际 ~1.0em/字，0.6 低估 40%（K3 P2）
           inner.push(h('text', {
             x: Math.max(zvx + halfLab + 4, Math.min(zvx + zvw - halfLab - 4, p.x)),
             y: p.y - S.r - 4, // 标签在节点上方：不再盖圆点（用户点单）
@@ -462,7 +462,7 @@ const GraphAside = defineComponent({
             dragMoved = false;
             const g = clientToGraph(ev);
             if (g) dragStart = g;
-            if (sim) sim.pinned = n.id;
+            if (sim) { sim.pinned = n.id; sim.wake(n.id); } // touch 同 mousedown：一次抬能量
           },
           onMouseenter: () => {
             hoveredId.value = n.id;
@@ -491,8 +491,8 @@ const GraphAside = defineComponent({
       const vv = view;
       const zvx = vv.cx - (vw / 2) / vv.zoom, zvy = vv.cy - (vhh / 2) / vv.zoom;
       const zvw = vw / vv.zoom, zvhh = vhh / vv.zoom;
-      // 标签阈值：放大看局部（zoom≥1.5）显全部工作名，看全局只留当前文章名
-      const showAllLabels = vv.zoom >= 1.5;
+      // 标签阈值：zoom≥1.12 显全部工作名（一档滚轮即全亮），看全局只留当前文章名
+      const showAllLabels = vv.zoom >= 1.12;
       const labelSize = showAllLabels ? 17 : S.label; // 全标签档降字号：避让预算按 ~16.5 估（K3 P2-3）
       const svg = h('svg', {
         ref: (el: any) => { svgEl = el as SVGSVGElement; },
@@ -622,11 +622,8 @@ const GraphFull = defineComponent({
       // 钳画布边界内缩：pinned 节点跳过 integrate 的 clamp，这里补（K3 P1-3）
       sim.pos[dragId].x = Math.max(70, Math.min(930, g.x));
       sim.pos[dragId].y = Math.max(84, Math.min(666, g.y));
-      // 拖拽中 pin 跳过积分；wake 邻居抬能量让周围跟上（不灌速度给被拖节点）
-      for (const e of GRAPH_EDGES) {
-        if (e.a === dragId) sim.wake(e.b);
-        if (e.b === dragId) sim.wake(e.a);
-      }
+      // 拖拽中不每帧 wake 邻居；能量低谷低频补热防长拖冻死（K3 P0-1）
+      if (sim.strength < 0.15) sim.wake(dragId);
       pendingRender = true;
       if ('touches' in ev) ev.preventDefault();
     };
@@ -699,7 +696,7 @@ const GraphFull = defineComponent({
           class: ['gv-node', `gv-${n.state}`, isHover ? 'gv-node-on' : '', dim ? 'gv-dim' : ''],
           'stroke-width': n.state === 'queued' ? (isHover ? S.focusSW : S.queuedSW) : isHover ? S.focusSW : 0,
         })];
-        const halfLab = (n.label.length * S.label * 0.6) / 2;
+        const halfLab = (n.label.length * S.label * 0.95) / 2;
         inner.push(h('text', {
           x: Math.max(fzvx + halfLab + 6, Math.min(fzvx + fzvw - halfLab - 6, p.x)),
           y: p.y - S.r - 4,
@@ -713,7 +710,7 @@ const GraphFull = defineComponent({
             dragMoved = false;
             const g = clientToGraph(ev);
             if (g) dragStart = g;
-            if (sim) sim.pinned = n.id; // 钉住：物理不施力，拖拽不抖动
+            if (sim) { sim.pinned = n.id; sim.wake(n.id); } // 抬能量一次：邻居跟上，拖拽中不再每帧唤醒
             ev.preventDefault();
           },
           onTouchstart: (ev: TouchEvent) => {
@@ -721,7 +718,7 @@ const GraphFull = defineComponent({
             dragMoved = false;
             const g = clientToGraph(ev);
             if (g) dragStart = g;
-            if (sim) sim.pinned = n.id;
+            if (sim) { sim.pinned = n.id; sim.wake(n.id); } // touch 同 mousedown：一次抬能量
           },
           onMouseenter: () => {
             hoveredId.value = n.id;

@@ -484,7 +484,7 @@ const GraphAside = defineComponent({
       const holderStyle = fb
         ? { width: '100%', height: `${fb.height}px` }
         : { width: '100%', height: '190px' };
-      if (busy) holderStyle.height = '0px'; // 收放过渡：widget 让路不撑开（侵入正文的根因之一是占位还在）
+      // 占位保高：浮层隐身即可，占位不动——图例在占位下，占位坍缩图例瞬跳
       // slice 纵向放大星图（向下方发展）；高度受限档降级 meet 防裁掉底部节点（K3 P1-2）
       const par = fb && fb.height >= fb.width * 0.876 ? 'xMidYMin slice' : 'xMidYMid meet';
       // 缩放视窗：view.center/zoom 变换冻结 bbox（初始化在 boxView 中心）

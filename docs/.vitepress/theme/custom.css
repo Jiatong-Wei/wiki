@@ -356,10 +356,12 @@
    Article Claude-ification round 4 (K3)
    ============================================================ */
 
-/* P1-1 outline: quiet mono label + denser rows */
+/* P1-1 outline: Maple Mono + 宽松行距（高 DPI 屏：13px 太挤太丑） */
 .VPDocOutlineItem .outline-link {
-  font-size: 13px;
-  line-height: 26px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 13.5px;
+  line-height: 1.9;
+  letter-spacing: 0.005em;
 }
 .VPDocOutlineItem .outline-link.active {
   color: var(--vp-c-text-1);
@@ -506,7 +508,7 @@
 @media (min-width: 1280px) {
   :root .VPDoc .aside.aside { max-width: 296px; }
   :root .aside-container { width: 260px; }
-  :root .VPDoc.has-aside .content-container { max-width: 672px; } /* 正文微收，给 aside 让位 */
+  :root .VPDoc.has-aside .content-container { max-width: 704px; } /* 正文微收，给 aside 让位 */
 }
 
 /* 侧栏图例：与 /graph/ 页同款 chip，紧凑排列（.graph-legend.graph-legend-aside
@@ -527,7 +529,8 @@
    代价：星图矩形内的滚轮不再滚页面——即为缩放区语义 */
 .graph-float .gv-svg { pointer-events: auto; }
 .graph-float .gv-hit, .graph-float a { pointer-events: auto; }
-/* 收放过渡：浮层隐身让路（aside 平移期浮层坐标是旧的，露出来就是侵入正文） */
+/* 收放过渡：浮层隐身让路（aside 平移期浮层坐标是旧的，露出来就是侵入正文）。
+   占位高度不动——图例挂在占位下，占位坍缩会让图例瞬跳 */
 .graph-float.graph-float-busy { opacity: 0; pointer-events: none !important; }
 .graph-float.graph-float-busy .gv-hit, .graph-float.graph-float-busy a { pointer-events: none; }
 .graph-float { transition: opacity 0.15s; }
@@ -661,17 +664,21 @@
   .VPSidebar { transform: translateX(0); opacity: 1; visibility: visible;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s; }
   .VPDoc .container, .VPDoc .content-container { transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-  .VPNavBar .title { transition: opacity 0.2s; /* width/padding 过渡=layout 逐帧 reflow 掉帧大户，删；软切用 opacity */ }
-/* 收放切换瞬间 title 软淡（类瞬变 → 不透明度过渡接管） */
-.layout-animating .VPNavBar .title { opacity: 0.55; }
+  .VPNavBar .title {
+  /* 收放过渡：max-width 连续插值（width:auto 是离散的、不可动画）。
+     展开 max-width 到侧栏宽，收起收到内容宽——配合 opacity 软淡 */
+  transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+}
+@media (min-width: 960px) {
+  .VPNavBar.has-sidebar .title { max-width: var(--vp-sidebar-width); overflow: hidden; }
+  html.sidebar-collapsed .VPNavBar.has-sidebar .title { max-width: 0; opacity: 0; pointer-events: none; }
+}
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
   .graph-page.sidebar-collapsed .VPDoc.has-sidebar .container { max-width: min(90vw, 1200px); }
   .sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: 880px; }
-  /* 重叠修复：title 从 absolute 收进流，content 左垫随之清零（不再骑脸 Search） */
-  .sidebar-collapsed .VPNavBar.has-sidebar .title {
-    position: static; width: auto; padding-left: 16px; height: var(--vp-nav-height);
-  }
+  /* 重叠修复：title 收进 0 宽（max-width 过渡），content 左垫清零 */
+  .sidebar-collapsed .VPNavBar.has-sidebar .title { padding-left: 0; padding-right: 0; }
   .sidebar-collapsed .VPNavBar.has-sidebar .content { padding-left: 16px; }
   .sidebar-collapsed .VPNavBar.has-sidebar .divider { padding-left: 16px; }
 }

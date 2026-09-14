@@ -141,7 +141,7 @@ const RandomPick = defineComponent({
         .filter((h): h is string => !!h);
       const target = pool.length
         ? pool[Math.floor(Math.random() * pool.length)]
-        : '/splat/';
+        : withBase('/splat/'); // K3 P1-5：裸路径会跳主站 404
       window.location.assign(target);
     }, true);
     return () => null;

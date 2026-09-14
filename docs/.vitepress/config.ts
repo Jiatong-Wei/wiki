@@ -31,6 +31,7 @@ export default defineConfig({
     ['link', { rel: 'apple-touch-icon', href: `${BASE}apple-touch-icon.png` }],
     ['meta', { name: 'theme-color', content: '#1b1a17' }],
     ['link', { rel: 'preload', href: `${BASE}fonts/MapleMono.woff2`, as: 'font', type: 'font/woff2', crossorigin: '' }],
+    ['link', { rel: 'preload', href: `${BASE}fonts/MapleMono-Italic.woff2`, as: 'font', type: 'font/woff2', crossorigin: '' }], // navbar 花体首屏必需，防 FOUT
     // one-time migration: the default flipped from system-follow to light.
     // Drop the stored 'auto' (VitePress wrote it on old visits) so the new
     // light default reaches returning visitors; explicit user picks stay.
@@ -42,7 +43,7 @@ export default defineConfig({
     // pre-paint layout classes (K3 P1-1): avoid the 0.4s sidebar slide-out
     // replaying on every hard load for collapsed users, and the aside→full
     // snap on /graph/ — both must land before first paint, like dark-mode.
-    ['script', {}, `try{if(localStorage.getItem('wiki-sidebar-collapsed')==='1'){document.documentElement.classList.add('sidebar-collapsed')}if(/\\/graph\\/?$/.test(location.pathname)){document.documentElement.classList.add('graph-page')}}catch(e){}`],
+    ['script', {}, `try{if(localStorage.getItem('wiki-sidebar-collapsed-v2')==='1'){document.documentElement.classList.add('sidebar-collapsed')}if(/\\/graph\\/?$/.test(location.pathname)){document.documentElement.classList.add('graph-page')}}catch(e){}`],
     ['meta', { property: 'og:site_name', content: "Joye's Wiki" }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: "Joye's Wiki" }],
@@ -52,10 +53,18 @@ export default defineConfig({
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
   ],
   transformPageData(pageData) {
-    // per-page og:title for nicer shares
+    // per-page og tags for nicer shares（K3 P2-3：此前描述/url 全站共享首页值）
     const title = pageData.title ? `${pageData.title} · Joye's Wiki` : "Joye's Wiki";
+    const desc = pageData.frontmatter.summary ?? 'manipulation · mobile robots · 在仿真里较真';
+    const url = pageData.relativePath
+      ? `${ORIGIN}/wiki/${pageData.relativePath.replace(/(index)?\.md$/, '')}`
+      : `${ORIGIN}/wiki/`;
     pageData.frontmatter.head ??= [];
-    pageData.frontmatter.head.push(['meta', { property: 'og:title', content: title }]);
+    pageData.frontmatter.head.push(
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: desc }],
+      ['meta', { property: 'og:url', content: url }],
+    );
   },
   markdown: {
     // $...$ inline math — native since VitePress 1.2 (the 3DGS post uses it heavily)

@@ -44,11 +44,11 @@ summary: 意犹未尽
 
 > 串级PID调试视频
 
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=117217224170808&bvid=BV1Bttm6qEbT&cid=41603368454&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+<iframe loading="lazy" title="B 站视频" src="//player.bilibili.com/player.html?isOutside=true&aid=117217224170808&bvid=BV1Bttm6qEbT&cid=41603368454&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 
 ### Test
 备赛过程中的一次调车实录，实现了ESP32无线发车
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=117217073043582&bvid=BV15Sty6RErR&cid=41602322351&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+<iframe loading="lazy" title="B 站视频" src="//player.bilibili.com/player.html?isOutside=true&aid=117217073043582&bvid=BV15Sty6RErR&cid=41602322351&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
 
 
 

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jiatong-wei.github.io/wiki/sitemap.xml

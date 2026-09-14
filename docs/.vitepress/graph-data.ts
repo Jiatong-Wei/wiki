@@ -13,8 +13,8 @@
 //   builds-on = 先读 · uses = 用到 · sibling = 同台
 //   边方向：a builds-on b ⇒ b 是 a 的地基；a uses b ⇒ a 调用 b
 //
-// 布局：固定种子力导向在模块加载时预计算（SSR 与浏览器逐字节一致），
-//       运行时零模拟。加节点/边只需改下面两张表，坐标自动重排。
+// 布局：固定种子力导向在模块加载时预计算（SSR 与浏览器逐字节一致）。
+//       运行时另有 startLinkSim 活体物理（见下）；加节点/边改两张表即可，坐标自动重排。
 // ============================================================
 
 export type GraphKind = 'paper' | 'model' | 'concept';
@@ -259,7 +259,8 @@ export function startLinkSim(): LinkSimHandle {
   const idx = new Map(ids.map((id, i) => [id, i]));
   const disp = ids.map(() => ({ x: 0, y: 0 }));
   const k = Math.sqrt((W * H) / ids.length) * 1.5;
-  let energy = 0.55; // 初始有余温，入画即微动
+  // 前庭敏感用户（prefers-reduced-motion）初始零能量：不自顾自漂移（K3 P2-10）
+  let energy = (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0 : 0.55;
   let pinned: string | null = null;
 
   function integrate(dt: number): void {

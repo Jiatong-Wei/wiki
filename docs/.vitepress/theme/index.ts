@@ -1,6 +1,6 @@
 import DefaultTheme from 'vitepress/theme';
 import { h, defineComponent, onMounted, onBeforeUnmount, watch, nextTick, ref, computed } from 'vue';
-import { useRoute, useData, withBase } from 'vitepress';
+import { useRoute, withBase } from 'vitepress';
 import { useSidebar } from 'vitepress/theme';
 import './custom.css';
 import { captionFor } from './GraphView';
@@ -19,55 +19,6 @@ const ProgressBar = defineComponent({
     onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }));
     onBeforeUnmount(() => window.removeEventListener('scroll', onScroll));
     return () => h('div', { id: 'reading-progress' });
-  },
-});
-
-// "日期 · 约 N 分钟读完 · 约 X 字" injected under each doc's H1.
-// 字数口径（title tooltip 同步声明）：正文含标题与盾标行，不含代码块、
-// MathJax 公式（隐藏 MathML 会被 innerText 双算）、SVG、导语与本文计数行。
-// 仅对带 frontmatter.date 的文章页生效（/graph/ /random/ 等工具页跳过）。
-const ReadingTime = defineComponent({
-  setup() {
-    const route = useRoute();
-    const { frontmatter } = useData();
-    const inject = () => {
-      if (!frontmatter.value.date) return;
-      const content = document.querySelector('.content-container') ?? document.querySelector('.content');
-      const h1 = content?.querySelector('h1');
-      if (!content || !h1 || content.querySelector('.reading-time')) return;
-      const source = content.querySelector('.vp-doc') ?? content;
-      const clone = source.cloneNode(true) as HTMLElement;
-      clone
-        .querySelectorAll('pre, code, svg, mjx-container, .reading-time, .doc-lede, .header-anchor')
-        .forEach((el) => el.remove());
-      const text = clone.innerText ?? '';
-      const cjk = (text.match(/[\u4e00-\u9fff\u3000-\u303f\uff01-\uff5e]/g) ?? []).length;
-      const words = (text.match(/[a-zA-Z0-9]+(?:[-''][a-zA-Z0-9]+)*/g) ?? []).length;
-      const count = cjk + words;
-      const countStr =
-        count >= 10000 ? `${(count / 10000).toFixed(1)} 万字` : `${count.toLocaleString('en-US')} 字`;
-      const minutes = Math.max(1, Math.round(cjk / 400 + words / 220));
-      const raw = frontmatter.value.date as string | undefined;
-      const date = raw ? raw.slice(0, 10) : undefined;
-      const tag = document.createElement('p');
-      tag.className = 'reading-time';
-      tag.textContent = (date ? `${date} · ` : '') + `约 ${minutes} 分钟读完 · ${countStr}`;
-      // 认证标随 meta 行（frontmatter.cert 数据驱动；固定 innerHTML 无注入面）
-      if ((frontmatter.value.cert as string | undefined) === 'human') {
-        tag.innerHTML += ` · <svg class="cert-ico" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 2.2 C10.2 3.4 11.9 3.7 13 3.4 C12.9 8.4 11.7 11.6 8.2 14 C5 11.9 3.6 9.6 3.1 5.6 C4.9 5.1 6.8 3.9 8.4 2.2 Z" stroke-width="1.4"/><path d="M6.1 8.4 7.7 10 10.9 6.6" stroke-width="1.4"/></svg> <strong>Human certified</strong> — Handcrafted by Joye`;
-      }
-      tag.title = '字数口径：正文含标题，不含代码、公式与导语';
-      h1.after(tag);
-    };
-    onMounted(async () => {
-      await nextTick();
-      inject();
-      watch(() => route.path, async () => {
-        await nextTick();
-        inject();
-      });
-    });
-    return () => null;
   },
 });
 
@@ -144,32 +95,6 @@ const RandomPick = defineComponent({
         : withBase('/splat/'); // K3 P1-5：裸路径会跳主站 404
       window.location.assign(target);
     }, true);
-    return () => null;
-  },
-});
-
-// article lede: frontmatter.summary rendered between H1 and the meta line.
-// Registered AFTER ReadingTime so insertion order lands h1 -> lede -> meta.
-const Lede = defineComponent({
-  setup() {
-    const route = useRoute();
-    const { frontmatter } = useData();
-    const inject = () => {
-      const content = document.querySelector('.content-container') ?? document.querySelector('.content');
-      const h1 = content?.querySelector('h1');
-      if (!content || !h1 || content.querySelector('.doc-lede')) return;
-      const summary = frontmatter.value.summary as string | undefined;
-      if (!summary) return;
-      const p = document.createElement('p');
-      p.className = 'doc-lede';
-      p.textContent = summary;
-      h1.after(p);
-    };
-    onMounted(async () => {
-      await nextTick();
-      inject();
-      watch(() => route.path, async () => { await nextTick(); inject(); });
-    });
     return () => null;
   },
 });
@@ -361,7 +286,7 @@ const GraphAside = defineComponent({
           if (wasBusy) place(); // 过渡结束下降沿：aside 已平移，重锚浮层（K3 P0-2 双保险）
           sim.tick();
           // 空闲门：能量归零且无交互时不推帧；交互期 pending 由这里统一消费（≤60fps）
-          if (pendingRender || sim.strength > 0 || hoveredId.value || dragId) {
+          if (pendingRender || sim.strength > 0 || dragId) { // hover 靠 enter/leave 的 caption ref 边沿触发（K3 P2-11）
             pendingRender = false;
             tickId.value++;
           }
@@ -475,7 +400,13 @@ const GraphAside = defineComponent({
           },
         }));
         return h('g', { key: n.id }, [
-          n.state === 'written' && n.article ? h('a', { href: withBase(n.article) }, inner) : inner,
+          n.state === 'written' && n.article
+            ? h('a', {
+                href: withBase(n.article),
+                onFocus: () => { hoveredId.value = n.id; caption.value = shortRel(n, c); }, // 键盘可达（K3 P2-14）
+                onBlur: () => { hoveredId.value = null; caption.value = ''; },
+              }, inner)
+            : inner,
         ]);
       };
 
@@ -644,7 +575,7 @@ const GraphFull = defineComponent({
         if (sim && !layoutBusyF()) {
           sim.tick();
           // 空闲门 + 交互 pending 统一 rAF 消费（鼠标事件不逐次触发全量渲染）
-          if (pendingRender || sim.strength > 0 || hoveredId.value || dragId) {
+          if (pendingRender || sim.strength > 0 || dragId) { // hover 靠 enter/leave 的 caption ref 边沿触发（K3 P2-11）
             pendingRender = false;
             tickId.value++;
           }
@@ -669,7 +600,10 @@ const GraphFull = defineComponent({
     const chip = (cls: string, text: string) =>
       h('span', { class: ['graph-legend-chip', cls] }, text);
     return () => {
-      if (!simReady.value || !sim) return null;
+      if (!simReady.value || !sim) {
+        // 构建期无 SSR、mount 后才出图——占位保高防 CLS（K3 P2-13）
+        return h('div', { class: 'graph-full graph-full-placeholder', 'aria-hidden': 'true' });
+      }
       tickId.value;
       const { nodes, edges, pos } = sim;
       const hid = hoveredId.value;
@@ -737,7 +671,13 @@ const GraphFull = defineComponent({
           },
         }));
         return h('g', { key: n.id }, [
-          n.state === 'written' && n.article ? h('a', { href: withBase(n.article) }, inner) : inner,
+          n.state === 'written' && n.article
+            ? h('a', {
+                href: withBase(n.article),
+                onFocus: () => { hoveredId.value = n.id; caption.value = captionFor(n); }, // 键盘可达（K3 P2-14）
+                onBlur: () => { hoveredId.value = null; caption.value = ''; },
+              }, inner)
+            : inner,
         ]);
       };
 
@@ -846,8 +786,7 @@ export default {
   Layout: () =>
     h(DefaultTheme.Layout, null, {
       'layout-top': () => [h(ProgressBar), h(BrandTitle), h(RandomPick), h(SidebarToggle)],
-      'doc-after': () => [h(ReadingTime), h(Lede)],
-      'doc-bottom': () => [h(ZoomImages), h(GraphMobileLink)],
+            'doc-bottom': () => [h(ZoomImages), h(GraphMobileLink)],
       'aside-outline-after': () => h(GraphAside),
     }),
   enhanceApp({ app }: any) {

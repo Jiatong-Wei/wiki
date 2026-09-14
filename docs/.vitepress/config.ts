@@ -69,6 +69,64 @@ export default defineConfig({
   markdown: {
     // $...$ inline math — native since VitePress 1.2 (the 3DGS post uses it heavily)
     math: true,
+    config(md) {
+      // K3 深检 P1-3：全站图片懒加载——构建期注入，未来文章零心智负担
+      const origImage = md.renderer.rules.image!;
+      md.renderer.rules.image = (tokens, idx, options, env, self) => {
+        const token = tokens[idx];
+        token.attrSet('loading', 'lazy');
+        token.attrSet('decoding', 'async');
+        return origImage(tokens, idx, options, env, self);
+      };
+
+      // K3 深检 P1-4：meta/lede 构建期注入——消灭主内容区唯一 CLS 源 +
+      // 运行期 cloneNode 全文计数。口径：CJK 字 + latin 词，剔除 code/math。
+      md.use(function joyeMeta(mdLocal) {
+        mdLocal.core.ruler.push('joye_meta', (state) => {
+          const fm = (state.env as any).frontmatter ?? {};
+          if (!fm.date || state.tokens[0]?.type !== 'heading_open') return;
+          // 收集纯文本（剔除 code fence / inline code / math）
+          let text = '';
+          const walk = (toks: any[]) => {
+            for (const t of toks) {
+              if (t.type === 'fence' || t.type === 'code_block' || t.type === 'math_block') continue;
+              if (t.type === 'inline' && t.children) {
+                for (const c of t.children) {
+                  if (c.type === 'text') text += c.content;
+                  if (c.type === 'code_inline' || c.type === 'math_inline') continue;
+                }
+              }
+            }
+          };
+          walk(state.tokens);
+          const cjk = (text.match(/[\u4e00-\u9fff\u3000-\u303f\uff01-\uff5e]/g) ?? []).length;
+          const words = (text.match(/[a-zA-Z0-9]+/g) ?? []).length;
+          const count = cjk + words;
+          const countStr = count >= 10000 ? `${(count / 10000).toFixed(1)} 万字` : `${count.toLocaleString('en-US')} 字`;
+          const minutes = Math.max(1, Math.round(cjk / 400 + words / 220));
+          const esc = (x: string) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const cert = fm.cert === 'human'
+            ? ' · <svg class="cert-ico" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 2.2 C10.2 3.4 11.9 3.7 13 3.4 C12.9 8.4 11.7 11.6 8.2 14 C5 11.9 3.6 9.6 3.1 5.6 C4.9 5.1 6.8 3.9 8.4 2.2 Z" stroke-width="1.4"/><path d="M6.1 8.4 7.7 10 10.9 6.6" stroke-width="1.4"/></svg> <strong>Human certified</strong> — Handcrafted by Joye'
+            : '';
+          const rawDate: unknown = fm.date;
+          const date = rawDate instanceof Date
+            ? rawDate.toISOString().slice(0, 10)
+            : String(rawDate).slice(0, 10);
+          const html =
+            (fm.summary ? `<p class="doc-lede">${esc(String(fm.summary))}</p>\n` : '') +
+            `<p class="reading-time">${date} · 约 ${minutes} 分钟读完 · ${countStr}${cert}</p>`;
+          // 插在第一个 H1 的 heading_close 之后
+          let i = 0;
+          while (i < state.tokens.length && state.tokens[i].type !== 'heading_close') i++;
+          if (i < state.tokens.length) {
+            const tok = new (state.Token as any)('html_block', '', 0);
+            tok.content = html;
+            tok.block = true;
+            state.tokens.splice(i + 1, 0, tok as any);
+          }
+        });
+      });
+    },
   },
   themeConfig: {
     nav: [

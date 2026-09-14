@@ -697,6 +697,14 @@
   .sidebar-collapsed .VPNavBar.has-sidebar .divider { padding-left: 16px; }
 }
 
+/* graph 全图页占位（K3 P2-13：mount 前防 CLS，高度对齐最终 svg） */
+.graph-full-placeholder {
+  aspect-ratio: 1000 / 760;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+}
+
 /* graph 全图页占满版心（GraphFull 挂载时 html 打 graph-page 类） */
 @media (min-width: 960px) {
   .graph-page .VPDoc.has-aside .aside { display: none; }

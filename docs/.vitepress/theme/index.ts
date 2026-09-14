@@ -216,7 +216,7 @@ const GraphAside = defineComponent({
     const layoutBusyRef = ref(false); // render 响应式：layout-animating 类挂/摘
     // 缩放视窗：滚轮 zoom-at-point，zoom≥1.5 自动展开全部工作名。
     // 普通对象非响应式——渲染只走 pendingRender→tickId 管线（K3 P1-1）
-    const view = { zoom: 1, cx: 0, cy: 0 };
+    const view = { zoom: 0.82, cx: 0, cy: 0 }; // 初始视野放宽：全节点容纳（含漂移出冻结窗的）
     // fixed 浮层几何：SVG 脱离侧栏的 overflow 裁切，向右下发展。
     // 左界锚 aside-container 左缘（硬钳防布局未稳期漂移），右界钳视口，
     // 高度参与公式（slice 模式星图纵向放大）。
@@ -374,7 +374,7 @@ const GraphAside = defineComponent({
         animate.value = false;
         caption.value = '';
         hoveredId.value = null; // 跨路由清 hover 残留
-        view.zoom = 1; view.cx = 0; view.cy = 0; // K3 P1-1：重置缩放，新文章中心不缺位
+        view.zoom = 0.82; view.cx = 0; view.cy = 0; // K3 P1-1：重置缩放，新文章中心不缺位
         nextTick(place); // 路由切换后 aside 位置可能变，重锚浮层
       });
     });
@@ -415,7 +415,7 @@ const GraphAside = defineComponent({
       }
       const { vx0, vy0, vw, vhh } = boxView.value;
       const hid = hoveredId.value;
-      const S = { r: 9, label: 24, queuedSW: 3, focusSW: 3.2, edge: 2.8 };
+      const S = { r: 11, label: 24, queuedSW: 3.4, focusSW: 3.6, edge: 3.0 };
 
       const renderEdge = (e: any) => {
         const A = pos[e.a], B = pos[e.b];

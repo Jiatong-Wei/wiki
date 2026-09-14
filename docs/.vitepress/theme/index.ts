@@ -318,6 +318,7 @@ const GraphFull = defineComponent({
 
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
+    const simReady = ref(false);
     let dragId: string | null = null;
     let dragMoved = false; // 拖拽守卫：位移超阈值才算拖，否则松手算点击
     let dragStart = { x: 0, y: 0 };
@@ -355,6 +356,7 @@ const GraphFull = defineComponent({
     onMounted(() => {
       document.documentElement.classList.add('graph-page'); // 全图页占满版心
       sim = startLinkSim();
+      simReady.value = true; // 与 GraphAside 同款时机修复：裸闭包变量赋值不触发重渲染
       const loop = () => {
         if (sim) { sim.tick(); tickId.value++; }
         raf = requestAnimationFrame(loop);
@@ -377,7 +379,7 @@ const GraphFull = defineComponent({
     const chip = (cls: string, text: string) =>
       h('span', { class: ['graph-legend-chip', cls] }, text);
     return () => {
-      if (!sim) return null;
+      if (!simReady.value || !sim) return null;
       tickId.value;
       const { nodes, edges, pos } = sim;
       const hid = hoveredId.value;
@@ -513,8 +515,10 @@ const SidebarToggle = defineComponent({
         title: collapsed.value ? '展开侧边栏' : '收起侧边栏',
         'aria-label': '收起或展开左侧导航栏',
       }, [
-        h('svg', { viewBox: '0 0 16 16', width: 17, height: 17, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
-          h('path', { d: 'M2.5 2.5v11M6 2.5v11M6 2.5h7.5a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H6M6 8.5h4' }),
+        // Cursor/VS Code 同款 layout-sidebar：外框面板 + 左侧分隔（侧栏区）
+        h('svg', { viewBox: '0 0 16 16', width: 17, height: 17, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+          h('rect', { x: '2.25', y: '3.25', width: '11.5', height: '9.5', rx: '1.75' }),
+          h('path', { d: 'M6.25 3.25v9.5' }),
         ]),
       ]);
     };

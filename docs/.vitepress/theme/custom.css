@@ -605,39 +605,41 @@
    ============================================================ */
 .sidebar-toggle-btn {
   position: fixed;
-  left: 0;
-  bottom: 0;
+  left: 8px;
+  bottom: 8px;
   z-index: calc(var(--vp-z-index-sidebar) + 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   border: none;
-  border-radius: 0 8px 0 0;
+  border-radius: 8px;
   background: transparent;
   color: var(--vp-c-text-3);
   cursor: pointer;
   transition: color 0.2s, background-color 0.2s;
 }
 .sidebar-toggle-btn:hover { color: var(--vp-c-text-1); background: var(--vp-c-default-soft); }
-.sidebar-toggle-btn.is-collapsed svg { transform: scaleX(-1); }
-.sidebar-toggle-btn svg { transition: transform 0.25s ease; }
+.sidebar-toggle-btn:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 2px; }
 
 @media (min-width: 960px) {
   /* 收拢：sidebar 滑出视口（transform 可插值，display 不行） */
-  .sidebar-collapsed .VPSidebar {
+  html.sidebar-collapsed .VPSidebar {
     transform: translateX(-100%);
     opacity: 0;
     visibility: hidden;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s 0.4s;
   }
   /* 过渡动画：统一缓动曲线 */
-  .VPSidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; }
+  .VPSidebar { transform: translateX(0); opacity: 1; visibility: visible;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s; }
   .VPDoc .container, .VPDoc .content-container { transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .VPNavBar .title { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
+  .graph-page.sidebar-collapsed .VPDoc.has-sidebar .container { max-width: min(94vw, 1400px); }
   .sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: 880px; }
   /* 重叠修复：title 从 absolute 收进流，content 左垫随之清零（不再骑脸 Search） */
   .sidebar-collapsed .VPNavBar.has-sidebar .title {

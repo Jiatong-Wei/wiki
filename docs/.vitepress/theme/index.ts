@@ -170,7 +170,7 @@ const Lede = defineComponent({
   },
 });
 
-// 知识星图侧栏挂载（本页目录正下方）：当前文章高亮，活体引力微动
+// 关联星图侧栏挂载（本页目录正下方）：当前文章高亮，活体引力微动
 //（Obsidian 双链式：从确定性布局出发持续积分，hover 扰动会摇醒邻居）。
 // hover 出一句话简介，coral 实心（written）节点可点进文章。
 // /graph/ /random/ 等工具页与无图节点的文章不渲染。
@@ -224,7 +224,7 @@ const GraphAside = defineComponent({
       if (!c || excluded.value) return null;
       if (!simReady.value || !sim) return h('div', { class: 'graph-widget' }, [
         h('div', { class: 'graph-widget-head' }, [
-          h('span', { class: 'graph-widget-title' }, '知识星图'),
+          h('span', { class: 'graph-widget-title' }, '关联星图'),
           h('a', { class: 'graph-widget-link', href: withBase('/graph/') }, '全图 →'),
         ]),
       ]);
@@ -287,15 +287,15 @@ const GraphAside = defineComponent({
 
       return h('div', { class: ['graph-widget', animate.value ? 'graph-widget-anim' : ''] }, [
         h('div', { class: 'graph-widget-head' }, [
-          h('span', { class: 'graph-widget-title' }, '知识星图'),
+          h('span', { class: 'graph-widget-title' }, '关联星图'),
           h('a', { class: 'graph-widget-link', href: withBase('/graph/') }, '全图 →'),
         ]),
         h('svg', {
           viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
           role: 'img',
-          'aria-label': '知识星图：coral 实心为已写文章，灰实心为已读，空心为待读',
+          'aria-label': '关联星图：coral 实心为已写文章，灰实心为已读，空心为待读',
         }, [
-          h('title', {}, '知识星图'),
+          h('title', {}, '关联星图'),
           ...edges.map(renderEdge).filter(Boolean),
           ...nodes.map(renderNode),
         ]),
@@ -448,9 +448,9 @@ const GraphFull = defineComponent({
         h('svg', {
           ref: (el: any) => { svgEl = el; },
           viewBox: '0 0 1000 760', class: 'gv-svg', role: 'img',
-          'aria-label': '知识星图：coral 实心为已写文章，灰实心为已读，空心为待读',
+          'aria-label': '关联星图：coral 实心为已写文章，灰实心为已读，空心为待读',
         }, [
-          h('title', {}, '知识星图'),
+          h('title', {}, '关联星图'),
           ...edges.map(renderEdge).filter(Boolean),
           ...nodes.map(renderNode),
         ]),
@@ -475,7 +475,7 @@ const GraphMobileLink = defineComponent({
     return () => {
       if (route.path.includes('/graph/')) return null;
       return h('p', { class: 'graph-mobile-entry' }, [
-        h('a', { href: withBase('/graph/') }, '查看知识星图 →'),
+        h('a', { href: withBase('/graph/') }, '查看关联星图 →'),
       ]);
     };
   },
@@ -511,7 +511,7 @@ const SidebarToggle = defineComponent({
         'aria-label': '收起或展开左侧导航栏',
       }, [
         h('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
-          h('path', { d: 'M2 3h12M2 8h8M2 13h12' }),
+          h('path', { d: 'M2.5 2.5v11M6 2.5v11M6 2.5h7.5a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H6M6 8.5h4' }),
         ]),
       ]);
     };

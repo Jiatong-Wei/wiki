@@ -503,7 +503,12 @@
   transition: color 0.25s;
 }
 .graph-widget-link:hover { color: var(--vp-c-brand-2); }
-.graph-widget .gv-svg { width: 100%; height: auto; }
+.graph-widget .gv-svg {
+  width: 132%;
+  max-width: none;
+  height: auto;
+  margin-right: -34%; /* 出格：越过目录右缘 */
+}
 .graph-widget-caption {
   margin: 2px 0 0;
   font-size: 11.5px;
@@ -613,16 +618,25 @@
   transition: color 0.25s, border-color 0.25s, background-color 0.25s;
 }
 .sidebar-toggle-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
-.sidebar-toggle-btn.is-collapsed svg { transform: rotate(180deg); }
-.sidebar-toggle-btn svg { transition: transform 0.3s; }
+.sidebar-toggle-btn.is-collapsed svg { transform: scaleX(-1); }
+.sidebar-toggle-btn svg { transition: transform 0.25s ease, opacity 0.25s; }
 
 @media (min-width: 960px) {
   /* 收拢：sidebar 从布局中移除，内容区独占 */
   .sidebar-collapsed .VPSidebar { display: none; }
+  /* 过渡动画：收/展不再生硬 */
+  .VPSidebar { transition: transform 0.35s ease, opacity 0.3s ease, width 0.35s ease; }
+  .VPDoc .container, .VPDoc .content-container { transition: max-width 0.35s ease; }
+  .VPNavBar .title { transition: width 0.35s ease, padding-left 0.35s ease, position 0s; }
+  .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding-left 0.35s ease, padding-right 0.35s ease; }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
   .sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: 880px; }
-  /* 导航 title 不再给 sidebar 留列 */
-  .sidebar-collapsed .VPNavBar.has-sidebar .title { width: auto; padding-left: 16px; border-bottom: none; }
+  /* 重叠修复：title 从 absolute 收进流，content 左垫随之清零（不再骑脸 Search） */
+  .sidebar-collapsed .VPNavBar.has-sidebar .title {
+    position: static; width: auto; padding-left: 16px; height: var(--vp-nav-height);
+  }
+  .sidebar-collapsed .VPNavBar.has-sidebar .content { padding-left: 16px; }
+  .sidebar-collapsed .VPNavBar.has-sidebar .divider { padding-left: 16px; }
 }
 
 /* GraphFull 拖拽光标 */

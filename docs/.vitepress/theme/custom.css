@@ -661,9 +661,16 @@
     visibility: hidden;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s 0.4s;
   }
+  /* 展开时立即可见+在位——不收起那套 visibility 延迟 */
+  html.sidebar-expanded .VPSidebar {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s;
+  }
   /* 过渡动画：统一缓动曲线（时长 0.4s 与 index.ts SidebarToggle 的 480ms 挂钩） */
   .VPSidebar { transform: translateX(0); opacity: 1; visibility: visible;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s; }
+  /* aside 跟手：.aside-container 是 fixed，收放时内容区移动它不动——
+     过渡 left（布局决定的值），展开/收起时 aside 随容器一起平移 */
+  .aside-container { transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .VPDoc .container, .VPDoc .content-container { transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .VPNavBar .title {
   /* 收放过渡：max-width 连续插值（width:auto 是离散的、不可动画）。
@@ -678,7 +685,7 @@
     transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   }
   html.sidebar-expanded .VPNavBar.has-sidebar .title { max-width: var(--vp-sidebar-width); opacity: 1; }
-  html.sidebar-collapsed .VPNavBar.has-sidebar .title { max-width: 0; opacity: 0; pointer-events: none; overflow: hidden; }
+  html.sidebar-collapsed .VPNavBar.has-sidebar .title { max-width: 0; opacity: 0; pointer-events: none; overflow: hidden; margin-left: 0; /* 右缘收缩：避免左缘先跳的观感 */ }
 }
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }

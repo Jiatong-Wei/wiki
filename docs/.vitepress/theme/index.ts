@@ -193,14 +193,24 @@ const GraphAside = defineComponent({
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
     const simReady = ref(false);
-    // fixed 浮层几何：SVG 脱离侧栏的 overflow 裁切，向正文方向出格
-    const floatBox = ref<{ left: number; top: number; width: number } | null>(null);
+    // fixed 浮层几何：SVG 脱离侧栏的 overflow 裁切，向右下发展。
+    // 左界锚 aside-container 左缘（硬钳防布局未稳期漂移），右界钳视口，
+    // 高度参与公式（slice 模式星图纵向放大）。
+    const floatBox = ref<{ left: number; top: number; width: number; height: number } | null>(null);
     let holderEl: HTMLElement | null = null;
+    let asideEl: HTMLElement | null = null;
     const place = () => {
       if (!holderEl) return;
-      const r = holderEl.getBoundingClientRect();
-      const width = Math.round(Math.min(r.width * 1.5, window.innerWidth - r.left - 14));
-      floatBox.value = { left: Math.round(r.left), top: Math.round(r.top), width };
+      const aside = document.querySelector('.aside-container') as HTMLElement | null;
+      const hr = holderEl.getBoundingClientRect();
+      const ar = aside?.getBoundingClientRect();
+      // 左界：aside 左缘（比 holder 稳，水合早期 holder 可能漂）
+      const left = Math.max(Math.round(ar?.left ?? hr.left), Math.round(hr.left) - 4);
+      // 右界：视口右缘留 14px；宽度 cap 侧栏宽的 1.5 倍
+      const width = Math.max(200, Math.min(Math.round((ar?.width ?? hr.width) * 1.5), window.innerWidth - left - 14));
+      // 下界发展：高度吃掉视口剩余（cap 宽的 0.98，slice 会纵向放大星图）
+      const height = Math.min(window.innerHeight - hr.top - 14, Math.round(width * 0.98));
+      floatBox.value = { left, top: Math.round(hr.top), width, height: Math.max(160, height) };
     };
     onMounted(() => {
       try {
@@ -213,12 +223,20 @@ const GraphAside = defineComponent({
       simReady.value = true; // ref 触发重渲染，不靠裸变量时机
       nextTick(place);
       window.addEventListener('resize', place);
+      // aside 是 fixed + 自身滚动：长目录把 widget 顶出视口后，内部滚动也移动 holder（K3 P1-1）
+      asideEl = document.querySelector('.aside-container');
+      asideEl?.addEventListener('scroll', place, { passive: true });
+      const layoutBusy = () => document.documentElement.classList.contains('layout-animating');
+      let wasBusy = false;
       const loop = () => {
-        if (sim) {
+        const busy = layoutBusy();
+        if (sim && !busy) {
+          if (wasBusy) place(); // 过渡结束下降沿：aside 已平移，重锚浮层（K3 P0-2 双保险）
           sim.tick();
           // 空闲门：能量归零且无交互时不再推帧（画面静止，重渲染恒等）
           if (sim.strength > 0 || hoveredId.value) tickId.value++;
         }
+        wasBusy = busy;
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
@@ -232,6 +250,7 @@ const GraphAside = defineComponent({
     onBeforeUnmount(() => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', place);
+      asideEl?.removeEventListener('scroll', place);
     });
 
     return () => {
@@ -301,12 +320,14 @@ const GraphAside = defineComponent({
       };
 
       const fb = floatBox.value;
-      const svgRatio = vhh / vw;
       const holderStyle = fb
-        ? { width: '100%', height: `${Math.round(fb.width * svgRatio)}px` }
+        ? { width: '100%', height: `${fb.height}px` }
         : { width: '100%', height: '190px' };
+      // slice 纵向放大星图（向下方发展）；高度受限档降级 meet 防裁掉底部节点（K3 P1-2）
+      const par = fb && fb.height >= fb.width * 0.876 ? 'xMidYMin slice' : 'xMidYMid meet';
       const svg = h('svg', {
         viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
+        preserveAspectRatio: par,
         role: 'img',
         'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
       }, [
@@ -327,7 +348,8 @@ const GraphAside = defineComponent({
         fb
           ? h('div', {
               class: 'graph-float',
-              style: `left:${fb.left}px; top:${fb.top}px; width:${fb.width}px;`,
+              // height 必须显式：否则 svg 的 100% 解析为 auto，slice 纵向放大落空（K3 P0-1）
+              style: `left:${fb.left}px; top:${fb.top}px; width:${fb.width}px; height:${fb.height}px;`,
             }, [svg])
           : null,
         h('p', { class: 'graph-widget-caption', 'aria-live': 'polite' },
@@ -388,8 +410,13 @@ const GraphFull = defineComponent({
       document.documentElement.classList.add('graph-page'); // 全图页占满版心
       sim = startLinkSim();
       simReady.value = true; // 与 GraphAside 同款时机修复：裸闭包变量赋值不触发重渲染
+      const layoutBusyF = () => document.documentElement.classList.contains('layout-animating');
       const loop = () => {
-        if (sim) { sim.tick(); tickId.value++; }
+        if (sim && !layoutBusyF()) {
+          sim.tick();
+          // 空闲门：能量归零且无拖拽悬停时不推帧（掉帧治本：不与布局过渡抢主线程）
+          if (sim.strength > 0 || hoveredId.value || dragId) tickId.value++;
+        }
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
@@ -528,9 +555,18 @@ const SidebarToggle = defineComponent({
     const apply = () => {
       document.documentElement.classList.toggle('sidebar-collapsed', collapsed.value);
     };
+    let animTimer = 0;
     const toggle = () => {
       collapsed.value = !collapsed.value;
       apply();
+      // 过渡窗口内挂类：星图 sim 停帧让路主线程（掉帧治本）
+      document.documentElement.classList.add('layout-animating');
+      clearTimeout(animTimer);
+      animTimer = window.setTimeout(() => {
+        document.documentElement.classList.remove('layout-animating');
+        // 布局尘埃落定后重锚浮层：收放使 aside 横移，place 只在 resize/路由时跑（K3 P0-2）
+        window.dispatchEvent(new Event('resize'));
+      }, 480);
       try { localStorage.setItem('wiki-sidebar-collapsed', collapsed.value ? '1' : '0'); } catch { /* ignore */ }
     };
     onMounted(() => {

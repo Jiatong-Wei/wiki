@@ -509,7 +509,7 @@
   z-index: 30;
   pointer-events: none; /* 容器穿透，不遮正文点击 */
 }
-.graph-float .gv-svg { width: 100%; height: auto; }
+.graph-float .gv-svg { width: 100%; height: 100%; display: block; }
 .graph-float .gv-hit, .graph-float a { pointer-events: auto; }
 .graph-widget-caption {
   margin: 2px 0 0;
@@ -637,11 +637,11 @@
     visibility: hidden;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s 0.4s;
   }
-  /* 过渡动画：统一缓动曲线 */
+  /* 过渡动画：统一缓动曲线（时长 0.4s 与 index.ts SidebarToggle 的 480ms 挂钩） */
   .VPSidebar { transform: translateX(0); opacity: 1; visibility: visible;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s; }
   .VPDoc .container, .VPDoc .content-container { transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-  .VPNavBar .title { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .VPNavBar .title { transition: opacity 0.2s; /* width/padding 过渡=layout 逐帧 reflow 掉帧大户，删；软切用 opacity */ }
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
   .graph-page.sidebar-collapsed .VPDoc.has-sidebar .container { max-width: min(90vw, 1200px); }

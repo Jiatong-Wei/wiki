@@ -52,7 +52,11 @@ const ReadingTime = defineComponent({
       const tag = document.createElement('p');
       tag.className = 'reading-time';
       tag.textContent = (date ? `${date} · ` : '') + `约 ${minutes} 分钟读完 · ${countStr}`;
-      tag.title = '字数口径：正文含标题与盾标，不含代码、公式与导语';
+      // 认证标随 meta 行（frontmatter.cert 数据驱动；固定 innerHTML 无注入面）
+      if ((frontmatter.value.cert as string | undefined) === 'human') {
+        tag.innerHTML += ` · <svg class="cert-ico" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 2.2 C10.2 3.4 11.9 3.7 13 3.4 C12.9 8.4 11.7 11.6 8.2 14 C5 11.9 3.6 9.6 3.1 5.6 C4.9 5.1 6.8 3.9 8.4 2.2 Z" stroke-width="1.4"/><path d="M6.1 8.4 7.7 10 10.9 6.6" stroke-width="1.4"/></svg> <strong>Human certified</strong> — Handcrafted by Joye`;
+      }
+      tag.title = '字数口径：正文含标题，不含代码、公式与导语';
       h1.after(tag);
     };
     onMounted(async () => {

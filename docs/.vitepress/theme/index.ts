@@ -213,6 +213,7 @@ const GraphAside = defineComponent({
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
     const simReady = ref(false);
+    const layoutBusyRef = ref(false); // render 响应式：layout-animating 类挂/摘
     // 缩放视窗：滚轮 zoom-at-point，zoom≥1.5 自动展开全部工作名。
     // 普通对象非响应式——渲染只走 pendingRender→tickId 管线（K3 P1-1）
     const view = { zoom: 1, cx: 0, cy: 0 };
@@ -223,6 +224,7 @@ const GraphAside = defineComponent({
     const boxView = ref<{ vx0: number; vy0: number; vw: number; vhh: number } | null>(null);
     let holderEl: HTMLElement | null = null;
     let asideEl: HTMLElement | null = null;
+    let clsObsRef: MutationObserver | null = null;
     let dragId: string | null = null;
     let dragMoved = false;
     let dragStart = { x: 0, y: 0 };
@@ -286,10 +288,7 @@ const GraphAside = defineComponent({
       }
       sim.pos[dragId].x = g.x;
       sim.pos[dragId].y = g.y;
-      for (const e of GRAPH_EDGES) {
-        if (e.a === dragId) sim.wake(e.b);
-        if (e.b === dragId) sim.wake(e.a);
-      }
+      // 拖拽中不每帧 wake（闪烁源）；邻居联动靠 mousedown 时一次 wake
       requestRender(); // rAF 消费：鼠标 125Hz 不再逐事件全量渲染
       if ('touches' in ev) ev.preventDefault();
     };
@@ -348,6 +347,12 @@ const GraphAside = defineComponent({
       // aside 是 fixed + 自身滚动：长目录把 widget 顶出视口后，内部滚动也移动 holder（K3 P1-1）
       asideEl = document.querySelector('.aside-container');
       asideEl?.addEventListener('scroll', place, { passive: true });
+      // render 响应式让路：layout-animating 类切换时同步 ref（classList 读取本身不触发重渲染）
+      const clsObs = new MutationObserver(() => {
+        layoutBusyRef.value = document.documentElement.classList.contains('layout-animating');
+      });
+      clsObs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      clsObsRef = clsObs; // 局部变量防泄漏
       const layoutBusy = () => document.documentElement.classList.contains('layout-animating');
       let wasBusy = false;
       const loop = () => {
@@ -376,6 +381,7 @@ const GraphAside = defineComponent({
     onBeforeUnmount(() => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', place);
+      clsObsRef?.disconnect();
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('touchmove', onMove);
@@ -436,7 +442,7 @@ const GraphAside = defineComponent({
           const halfLab = (n.label.length * labSize * 0.6) / 2;
           inner.push(h('text', {
             x: Math.max(zvx + halfLab + 4, Math.min(zvx + zvw - halfLab - 4, p.x)),
-            y: p.y + 22,
+            y: p.y - S.r - 4, // 标签在节点上方：不再盖圆点（用户点单）
             class: ['gv-label', isHover ? 'gv-label-on' : '', dim ? 'gv-dim' : ''],
             'text-anchor': 'middle', 'font-size': labSize,
           }, n.label));
@@ -448,7 +454,7 @@ const GraphAside = defineComponent({
             dragMoved = false;
             const g = clientToGraph(ev);
             if (g) dragStart = g;
-            if (sim) sim.pinned = n.id; // 钉住：拖拽不被弹簧拽离光标
+            if (sim) { sim.pinned = n.id; sim.wake(n.id); } // 抬能量一次：邻居跟上，但拖拽中不再每帧唤醒（闪烁源）
             ev.preventDefault();
           },
           onTouchstart: (ev: TouchEvent) => {
@@ -474,9 +480,11 @@ const GraphAside = defineComponent({
       };
 
       const fb = floatBox.value;
+      const busy = layoutBusyRef.value;
       const holderStyle = fb
         ? { width: '100%', height: `${fb.height}px` }
         : { width: '100%', height: '190px' };
+      if (busy) holderStyle.height = '0px'; // 收放过渡：widget 让路不撑开（侵入正文的根因之一是占位还在）
       // slice 纵向放大星图（向下方发展）；高度受限档降级 meet 防裁掉底部节点（K3 P1-2）
       const par = fb && fb.height >= fb.width * 0.876 ? 'xMidYMin slice' : 'xMidYMid meet';
       // 缩放视窗：view.center/zoom 变换冻结 bbox（初始化在 boxView 中心）
@@ -522,7 +530,7 @@ const GraphAside = defineComponent({
         }),
         fb
           ? h('div', {
-              class: 'graph-float',
+              class: ['graph-float', layoutBusyRef.value ? 'graph-float-busy' : ''],
               // height 必须显式：否则 svg 的 100% 解析为 auto，slice 纵向放大落空（K3 P0-1）
               style: `left:${fb.left}px; top:${fb.top}px; width:${fb.width}px; height:${fb.height}px;`,
             }, [svg])
@@ -694,7 +702,7 @@ const GraphFull = defineComponent({
         const halfLab = (n.label.length * S.label * 0.6) / 2;
         inner.push(h('text', {
           x: Math.max(fzvx + halfLab + 6, Math.min(fzvx + fzvw - halfLab - 6, p.x)),
-          y: p.y + S.labelGap,
+          y: p.y - S.r - 4,
           class: ['gv-label', isHover ? 'gv-label-on' : '', dim ? 'gv-dim' : ''],
           'text-anchor': 'middle', 'font-size': S.label,
         }, n.label));

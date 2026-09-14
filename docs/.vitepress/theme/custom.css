@@ -530,6 +530,10 @@
    代价：星图矩形内的滚轮不再滚页面——即为缩放区语义 */
 .graph-float .gv-svg { pointer-events: auto; }
 .graph-float .gv-hit, .graph-float a { pointer-events: auto; }
+/* 收放过渡：浮层隐身让路（aside 平移期浮层坐标是旧的，露出来就是侵入正文） */
+.graph-float.graph-float-busy { opacity: 0; pointer-events: none !important; }
+.graph-float.graph-float-busy .gv-hit, .graph-float.graph-float-busy a { pointer-events: none; }
+.graph-float { transition: opacity 0.15s; }
 .graph-widget-caption {
   margin: 2px 0 0;
   font-size: 11.5px;

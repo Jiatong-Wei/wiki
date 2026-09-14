@@ -604,31 +604,39 @@
    <960px 复用 VitePress 原生移动 overlay，无需此规则。
    ============================================================ */
 .sidebar-toggle-btn {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: calc(var(--vp-z-index-sidebar) + 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin-right: 6px;
-  border-radius: 8px;
-  border: 1px solid var(--vp-c-divider);
+  width: 40px;
+  height: 36px;
+  border: none;
+  border-radius: 0 8px 0 0;
   background: transparent;
-  color: var(--vp-c-text-2);
+  color: var(--vp-c-text-3);
   cursor: pointer;
-  transition: color 0.25s, border-color 0.25s, background-color 0.25s;
+  transition: color 0.2s, background-color 0.2s;
 }
-.sidebar-toggle-btn:hover { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
+.sidebar-toggle-btn:hover { color: var(--vp-c-text-1); background: var(--vp-c-default-soft); }
 .sidebar-toggle-btn.is-collapsed svg { transform: scaleX(-1); }
-.sidebar-toggle-btn svg { transition: transform 0.25s ease, opacity 0.25s; }
+.sidebar-toggle-btn svg { transition: transform 0.25s ease; }
 
 @media (min-width: 960px) {
-  /* 收拢：sidebar 从布局中移除，内容区独占 */
-  .sidebar-collapsed .VPSidebar { display: none; }
-  /* 过渡动画：收/展不再生硬 */
-  .VPSidebar { transition: transform 0.35s ease, opacity 0.3s ease, width 0.35s ease; }
-  .VPDoc .container, .VPDoc .content-container { transition: max-width 0.35s ease; }
-  .VPNavBar .title { transition: width 0.35s ease, padding-left 0.35s ease, position 0s; }
-  .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding-left 0.35s ease, padding-right 0.35s ease; }
+  /* 收拢：sidebar 滑出视口（transform 可插值，display 不行） */
+  .sidebar-collapsed .VPSidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0s 0.4s;
+  }
+  /* 过渡动画：统一缓动曲线 */
+  .VPSidebar { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; }
+  .VPDoc .container, .VPDoc .content-container { transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .VPNavBar .title { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
   .sidebar-collapsed .VPDoc.has-sidebar .container { max-width: 1180px; }
   .sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: 880px; }
   /* 重叠修复：title 从 absolute 收进流，content 左垫随之清零（不再骑脸 Search） */
@@ -637,6 +645,14 @@
   }
   .sidebar-collapsed .VPNavBar.has-sidebar .content { padding-left: 16px; }
   .sidebar-collapsed .VPNavBar.has-sidebar .divider { padding-left: 16px; }
+}
+
+/* graph 全图页占满版心（GraphFull 挂载时 html 打 graph-page 类） */
+@media (min-width: 960px) {
+  .graph-page .VPDoc.has-aside .aside { display: none; }
+  .graph-page .VPDoc .content-container { max-width: min(92vw, 1280px) !important; }
+  .graph-page .VPDoc.has-sidebar .content-container { max-width: min(92vw, 1280px) !important; }
+  .graph-page.sidebar-collapsed .VPDoc.has-sidebar .content-container { max-width: min(94vw, 1400px) !important; }
 }
 
 /* GraphFull 拖拽光标 */

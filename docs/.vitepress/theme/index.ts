@@ -170,7 +170,7 @@ const Lede = defineComponent({
   },
 });
 
-// 关联星图侧栏挂载（本页目录正下方）：当前文章高亮，活体引力微动
+// graph侧栏挂载（本页目录正下方）：当前文章高亮，活体引力微动
 //（Obsidian 双链式：从确定性布局出发持续积分，hover 扰动会摇醒邻居）。
 // hover 出一句话简介，coral 实心（written）节点可点进文章。
 // /graph/ /random/ 等工具页与无图节点的文章不渲染。
@@ -224,7 +224,7 @@ const GraphAside = defineComponent({
       if (!c || excluded.value) return null;
       if (!simReady.value || !sim) return h('div', { class: 'graph-widget' }, [
         h('div', { class: 'graph-widget-head' }, [
-          h('span', { class: 'graph-widget-title' }, '关联星图'),
+          h('span', { class: 'graph-widget-title' }, 'graph'),
           h('a', { class: 'graph-widget-link', href: withBase('/graph/') }, '全图 →'),
         ]),
       ]);
@@ -287,15 +287,15 @@ const GraphAside = defineComponent({
 
       return h('div', { class: ['graph-widget', animate.value ? 'graph-widget-anim' : ''] }, [
         h('div', { class: 'graph-widget-head' }, [
-          h('span', { class: 'graph-widget-title' }, '关联星图'),
+          h('span', { class: 'graph-widget-title' }, 'graph'),
           h('a', { class: 'graph-widget-link', href: withBase('/graph/') }, '全图 →'),
         ]),
         h('svg', {
           viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
           role: 'img',
-          'aria-label': '关联星图：coral 实心为已写文章，灰实心为已读，空心为待读',
+          'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
         }, [
-          h('title', {}, '关联星图'),
+          h('title', {}, 'graph'),
           ...edges.map(renderEdge).filter(Boolean),
           ...nodes.map(renderNode),
         ]),
@@ -308,7 +308,8 @@ const GraphAside = defineComponent({
 });
 
 // 全图页 <GraphFull />（graph.md 内直接用，enhanceApp 全局注册）
-// Obsidian 式交互：活体引力 + 拖拽节点 + 悬停邻居聚集
+// Obsidian 式交互：活体引力 + 拖拽节点 + 悬停邻居聚集。
+// 挂载时给 html 打 graph-page 类：隐藏 aside、放宽 content，全图占满版心。
 const GraphFull = defineComponent({
   setup() {
     const caption = ref('');
@@ -352,6 +353,7 @@ const GraphFull = defineComponent({
       setTimeout(() => { dragMoved = false; }, 0);
     };
     onMounted(() => {
+      document.documentElement.classList.add('graph-page'); // 全图页占满版心
       sim = startLinkSim();
       const loop = () => {
         if (sim) { sim.tick(); tickId.value++; }
@@ -364,6 +366,7 @@ const GraphFull = defineComponent({
       window.addEventListener('touchend', onUp);
     });
     onBeforeUnmount(() => {
+      document.documentElement.classList.remove('graph-page'); // 离开全图页恢复版心
       cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -448,9 +451,9 @@ const GraphFull = defineComponent({
         h('svg', {
           ref: (el: any) => { svgEl = el; },
           viewBox: '0 0 1000 760', class: 'gv-svg', role: 'img',
-          'aria-label': '关联星图：coral 实心为已写文章，灰实心为已读，空心为待读',
+          'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
         }, [
-          h('title', {}, '关联星图'),
+          h('title', {}, 'graph'),
           ...edges.map(renderEdge).filter(Boolean),
           ...nodes.map(renderNode),
         ]),
@@ -475,15 +478,15 @@ const GraphMobileLink = defineComponent({
     return () => {
       if (route.path.includes('/graph/')) return null;
       return h('p', { class: 'graph-mobile-entry' }, [
-        h('a', { href: withBase('/graph/') }, '查看关联星图 →'),
+        h('a', { href: withBase('/graph/') }, '查看 graph →'),
       ]);
     };
   },
 });
 
-// 左边栏收起：桌面一键收拢 sidebar，内容区/星图随之放大。
-// 展开态 localStorage 记忆；仅在有 sidebar 的页面显示按钮。
-// 移动端（<960px）交给原生 VPLocalNav "Menu" 按钮，不另造状态桥。
+// 左边栏收起（Cursor IDE 风）：按钮固定视口左下角——侧栏展开时嵌在侧栏
+// 底部（activity bar 位），收起时独立在左下角。展开态 localStorage 记忆；
+// 仅在有 sidebar 的页面显示。移动端（<960px）交给原生 VPLocalNav。
 const SidebarToggle = defineComponent({
   setup() {
     const route = useRoute();
@@ -507,10 +510,10 @@ const SidebarToggle = defineComponent({
       return h('button', {
         class: ['sidebar-toggle-btn', collapsed.value ? 'is-collapsed' : ''],
         onClick: toggle,
-        title: collapsed.value ? '展开侧边栏' : '收起侧边栏，内容区放大',
+        title: collapsed.value ? '展开侧边栏' : '收起侧边栏',
         'aria-label': '收起或展开左侧导航栏',
       }, [
-        h('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+        h('svg', { viewBox: '0 0 16 16', width: 17, height: 17, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
           h('path', { d: 'M2.5 2.5v11M6 2.5v11M6 2.5h7.5a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H6M6 8.5h4' }),
         ]),
       ]);
@@ -522,11 +525,10 @@ export default {
   extends: DefaultTheme,
   Layout: () =>
     h(DefaultTheme.Layout, null, {
-      'layout-top': () => [h(ProgressBar), h(BrandTitle), h(RandomPick)],
+      'layout-top': () => [h(ProgressBar), h(BrandTitle), h(RandomPick), h(SidebarToggle)],
       'doc-after': () => [h(ReadingTime), h(Lede)],
       'doc-bottom': () => [h(ZoomImages), h(GraphMobileLink)],
       'aside-outline-after': () => h(GraphAside),
-      'nav-bar-content-before': () => h(SidebarToggle),
     }),
   enhanceApp({ app }: any) {
     app.component('GraphFull', GraphFull);

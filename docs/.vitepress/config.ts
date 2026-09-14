@@ -39,6 +39,10 @@ export default defineConfig({
     // any non-explicit preference (empty/auto) becomes light. Explicit
     // user picks (light/dark) are kept.
     ['script', {}, `try{var k='vitepress-theme-appearance';var v=localStorage.getItem(k);if(v!=='light'&&v!=='dark'){localStorage.setItem(k,'light')}}catch(e){}`],
+    // pre-paint layout classes (K3 P1-1): avoid the 0.4s sidebar slide-out
+    // replaying on every hard load for collapsed users, and the aside→full
+    // snap on /graph/ — both must land before first paint, like dark-mode.
+    ['script', {}, `try{if(localStorage.getItem('wiki-sidebar-collapsed')==='1'){document.documentElement.classList.add('sidebar-collapsed')}if(/\\/graph\\/?$/.test(location.pathname)){document.documentElement.classList.add('graph-page')}}catch(e){}`],
     ['meta', { property: 'og:site_name', content: "Joye's Wiki" }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: "Joye's Wiki" }],
@@ -126,7 +130,7 @@ ${posts
 </channel></rss>`;
     writeFileSync(resolve(outDir, 'rss.xml'), rss);
 
-    const urls = ['', 'graph/', ...posts.map((p) => pageUrl(p.link))];
+    const urls = ['', 'graph/', ...posts.map((p) => pageUrl(p.link))];  // graph/ 是目录页，URL 天然成立
     const today = new Date().toISOString().slice(0, 10);
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

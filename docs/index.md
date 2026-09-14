@@ -16,7 +16,7 @@ hero:
 features:
   - icon: 🍍
     title: 长程任务也要干净利落：PALM 浅谈
-    details: 68M 小模型打 7B OpenVLA——VLA 长程失忆的一次拆解与复现
+    details: 68M 小模型打 7B OpenVLA，真的假的？
     link: /palm/
     linkText: 阅读
   - icon: 🫧

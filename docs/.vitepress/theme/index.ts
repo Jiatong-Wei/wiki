@@ -190,9 +190,27 @@ const GraphAside = defineComponent({
       );
     });
 
+    // 极简 hover 文案：只显工作名 + 与当前文章的关系（用户点单：不要长描述）
+    const shortRel = (n: any, center: any): string => {
+      const e = GRAPH_EDGES.find(
+        (x) => (x.a === n.id && x.b === center.id) || (x.b === n.id && x.a === center.id),
+      );
+      if (!e) return n.label;
+      const L: Record<string, string> = {
+        'uses-c': `${center.label} 用到它`, 'uses-n': `它用到 ${center.label}`,
+        'builds-on-c': `${center.label} 建立在它之上`, 'builds-on-n': `它是 ${center.label} 的地基`,
+        'sibling': `与 ${center.label} 同台`,
+      };
+      if (e.rel === 'sibling') return `${n.label} · ${L.sibling}`;
+      const key = e.rel + (e.a === center.id ? '-c' : '-n');
+      return `${n.label} · ${L[key] ?? ''}`;
+    };
+
     let sim: ReturnType<typeof startLinkSim> | null = null;
     let raf = 0;
     const simReady = ref(false);
+    // 缩放视窗：滚轮 zoom-at-point，zoom≥1.5 自动展开全部工作名
+    const view = ref<{ zoom: number; cx: number; cy: number }>({ zoom: 1, cx: 0, cy: 0 });
     // fixed 浮层几何：SVG 脱离侧栏的 overflow 裁切，向右下发展。
     // 左界锚 aside-container 左缘（硬钳防布局未稳期漂移），右界钳视口，
     // 高度参与公式（slice 模式星图纵向放大）。
@@ -207,9 +225,13 @@ const GraphAside = defineComponent({
     const clientToGraph = (ev: MouseEvent | TouchEvent): { x: number; y: number } | null => {
       if (!svgEl) return null;
       const rect = svgEl.getBoundingClientRect();
-      const vb = boxView.value;
+      // 实时 viewBox（缩放后依然精确）；档位判定沿用 fb/boxView
+      const raw = svgEl.getAttribute('viewBox');
+      if (!raw) return null;
+      const [vx0r, vy0r, vwr, vhr] = raw.split(/\s+/).map(Number);
       const fb = floatBox.value;
-      if (!vb || !fb) return null;
+      if (!fb) return null;
+      const vb = { vx0: vx0r, vy0: vy0r, vw: vwr, vhh: vhr };
       // 档位感知换算（K3 P1-1）：slice=max+xMid+yMin（y 顶对齐）；meet=min+双轴居中。
       // 档位判定与 render 的 par 一致
       const sliceMode = fb.height >= fb.width * 0.876;
@@ -247,6 +269,23 @@ const GraphAside = defineComponent({
       dragId = null;
       if (sim) sim.pinned = null;
       setTimeout(() => { dragMoved = false; }, 0);
+    };
+    // 滚轮缩放：以光标为锚 zoom-at-point；无需跳全图页看局部/整体
+    const onWheel = (ev: WheelEvent) => {
+      if (!svgEl || !ev.deltaY) return; // P2-2：触控板横向滑 deltaY=0 不缩放
+      ev.preventDefault();
+      const f = ev.deltaY < 0 ? 1.14 : 1 / 1.14;
+      const v = view.value;
+      const nz = Math.max(0.8, Math.min(3, v.zoom * f));
+      const anchor = clientToGraph(ev);
+      if (anchor) {
+        // 锚点守恒：(a-c')·z' = (a-c)·z ⇒ k = 旧/新（K3 P0-1：写反成新/旧会逐 tick 外漂）
+        const k = v.zoom / nz;
+        v.cx = anchor.x - (anchor.x - v.cx) * k;
+        v.cy = anchor.y - (anchor.y - v.cy) * k;
+      }
+      v.zoom = nz;
+      tickId.value++;
     };
     const place = () => {
       if (!holderEl) return;
@@ -297,6 +336,7 @@ const GraphAside = defineComponent({
         animate.value = false;
         caption.value = '';
         hoveredId.value = null; // 跨路由清 hover 残留
+        view.value = { zoom: 1, cx: 0, cy: 0 }; // K3 P1-1：重置缩放，新文章中心不缺位
         nextTick(place); // 路由切换后 aside 位置可能变，重锚浮层
       });
     });
@@ -330,7 +370,9 @@ const GraphAside = defineComponent({
         const ys = nodes.map((n) => GRAPH_LAYOUT[n.id]?.y ?? pos[n.id].y);
         const pad = 60;
         const bx0 = Math.min(...xs) - pad, by0 = Math.min(...ys) - pad;
-        boxView.value = { vx0: bx0, vy0: by0, vw: Math.max(...xs) + pad - bx0, vhh: Math.max(...ys) + pad - by0 };
+        const bv = { vx0: bx0, vy0: by0, vw: Math.max(...xs) + pad - bx0, vhh: Math.max(...ys) + pad - by0 };
+        boxView.value = bv;
+        view.value = { zoom: 1, cx: bv.vx0 + bv.vw / 2, cy: bv.vy0 + bv.vhh / 2 };
       }
       const { vx0, vy0, vw, vhh } = boxView.value;
       const hid = hoveredId.value;
@@ -350,19 +392,20 @@ const GraphAside = defineComponent({
         const p = pos[n.id];
         const isHover = hid === n.id;
         const dim = hid !== null && !isHover;
-        const showLabel = n.id === c.id;
+        const showLabel = n.id === c.id || showAllLabels;
+        const labSize = showAllLabels ? 17 : S.label;
         const inner: any[] = [h('circle', {
           cx: p.x, cy: p.y, r: isHover ? S.r + 2 : S.r,
           class: ['gv-node', `gv-${n.state}`, isHover ? 'gv-node-on' : '', dim ? 'gv-dim' : ''],
           'stroke-width': n.state === 'queued' ? (isHover ? S.focusSW : S.queuedSW) : isHover ? S.focusSW : 0,
         })];
         if (showLabel) {
-          const halfLab = (n.label.length * S.label * 0.6) / 2;
+          const halfLab = (n.label.length * labSize * 0.6) / 2;
           inner.push(h('text', {
-            x: Math.max(vx0 + halfLab + 4, Math.min(vx0 + vw - halfLab - 4, p.x)),
+            x: Math.max(zvx + halfLab + 4, Math.min(zvx + zvw - halfLab - 4, p.x)),
             y: p.y + 22,
             class: ['gv-label', isHover ? 'gv-label-on' : '', dim ? 'gv-dim' : ''],
-            'text-anchor': 'middle', 'font-size': S.label,
+            'text-anchor': 'middle', 'font-size': labSize,
           }, n.label));
         }
         inner.push(h('circle', {
@@ -384,13 +427,12 @@ const GraphAside = defineComponent({
           },
           onMouseenter: () => {
             hoveredId.value = n.id;
-            caption.value = captionFor(n, c.id);
+            caption.value = shortRel(n, c); // 极简：名称 + 与当前文章关系
             sim?.wake(n.id); // 摇醒邻居
           },
           onMouseleave: () => { hoveredId.value = null; caption.value = ''; },
           onClick: (ev: MouseEvent) => {
             if (dragMoved) { ev.preventDefault(); ev.stopPropagation(); return; }
-            if (n.state !== 'written') caption.value = `「${n.label}」${STATE_LABEL[n.state]} — ${n.note}`;
           },
         }));
         return h('g', { key: n.id }, [
@@ -404,12 +446,20 @@ const GraphAside = defineComponent({
         : { width: '100%', height: '190px' };
       // slice 纵向放大星图（向下方发展）；高度受限档降级 meet 防裁掉底部节点（K3 P1-2）
       const par = fb && fb.height >= fb.width * 0.876 ? 'xMidYMin slice' : 'xMidYMid meet';
+      // 缩放视窗：view.center/zoom 变换冻结 bbox（初始化在 boxView 中心）
+      const vv = view.value;
+      const zvx = vv.cx - (vw / 2) / vv.zoom, zvy = vv.cy - (vhh / 2) / vv.zoom;
+      const zvw = vw / vv.zoom, zvhh = vhh / vv.zoom;
+      // 标签阈值：放大看局部（zoom≥1.5）显全部工作名，看全局只留当前文章名
+      const showAllLabels = vv.zoom >= 1.5;
+      const labelSize = showAllLabels ? 17 : S.label; // 全标签档降字号：避让预算按 ~16.5 估（K3 P2-3）
       const svg = h('svg', {
         ref: (el: any) => { svgEl = el as SVGSVGElement; },
-        viewBox: `${vx0} ${vy0} ${vw} ${vhh}`, class: 'gv-svg gv-compact',
+        viewBox: `${zvx} ${zvy} ${zvw} ${zvhh}`, class: 'gv-svg gv-compact',
         preserveAspectRatio: par,
         role: 'img',
-        'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读',
+        'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读；滚轮缩放',
+        onWheel: (ev: WheelEvent) => onWheel(ev),
       }, [
         h('title', {}, 'graph'),
         ...edges.map(renderEdge).filter(Boolean),

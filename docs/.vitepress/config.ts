@@ -8,7 +8,7 @@ const ORIGIN = 'https://jiatong-wei.github.io';
 
 // 其余五篇暂缓公开（内容 review 中），页面仍可直达 URL 访问，恢复即取消注释。
 export const posts: Array<{ link: string; text: string; desc: string; date: string }> = [
-  { link: 'palm/', text: '长程任务也要干净利落：PALM 浅谈', desc: '68M 小模型打 7B OpenVLA——VLA 长程失忆的一次拆解与复现', date: '2026-09-13' },
+  { link: 'palm/', text: '长程任务也要干净利落：PALM 浅谈', desc: '68M 小模型打 7B OpenVLA，真的假的？', date: '2026-09-13' },
   { link: 'splat/', text: '高斯泼溅二三事', desc: '一个民间爱好者遇到一群民间爱好者', date: '2026-02-28' },
   // { link: 'isaac-report', text: '技术报告：在仿真里解剖一个抓取', desc: '五日弧封版：完整抓取 0 次，末端 0.54 → 0.094 m', date: '2026-08-29' },
   // { link: 'dagger-four-rounds', text: 'DAgger 四轮迭代：0.54 m → 0.094 m', desc: '教师逐帧重标注 + 聚合再训', date: '2026-08-28' },

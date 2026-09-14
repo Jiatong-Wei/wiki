@@ -226,6 +226,8 @@ const GraphAside = defineComponent({
     let dragMoved = false;
     let dragStart = { x: 0, y: 0 };
     let svgEl: SVGSVGElement | null = null;
+    // 空白平移：按下非节点处拖动 = pan 视窗（长按拖动看别处）
+    let pan: { cx: number; cy: number; gx: number; gy: number } | null = null;
     const clientToGraph = (ev: MouseEvent | TouchEvent): { x: number; y: number } | null => {
       if (!svgEl) return null;
       const rect = svgEl.getBoundingClientRect();
@@ -250,6 +252,24 @@ const GraphAside = defineComponent({
       };
     };
     const onMove = (ev: MouseEvent | TouchEvent) => {
+      if (pan && !dragId && svgEl) {
+        // pan：client 位移换算图单位，反向移动视窗中心
+        const rect = svgEl.getBoundingClientRect();
+        const raw = svgEl.getAttribute('viewBox');
+        if (raw) {
+          const [vx0r, vy0r, vwr] = raw.split(/\s+/).map(Number);
+          const scale = rect.width / vwr;
+          const cxp = 'touches' in ev ? ev.touches[0].clientX : ev.clientX;
+          const cyp = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
+          const gx = vx0r + (cxp - rect.left) / scale;
+          const gy = vy0r + (cyp - rect.top) / scale;
+          view.value.cx = pan.cx - (gx - pan.gx);
+          view.value.cy = pan.cy - (gy - pan.gy);
+          tickId.value++;
+        }
+        if ('touches' in ev) ev.preventDefault();
+        return;
+      }
       if (!dragId || !sim) return;
       const g = clientToGraph(ev);
       if (!g) return;
@@ -271,6 +291,7 @@ const GraphAside = defineComponent({
     };
     const onUp = () => {
       dragId = null;
+      pan = null;
       if (sim) sim.pinned = null;
       setTimeout(() => { dragMoved = false; }, 0);
     };
@@ -280,7 +301,7 @@ const GraphAside = defineComponent({
       ev.preventDefault();
       const f = ev.deltaY < 0 ? 1.14 : 1 / 1.14;
       const v = view.value;
-      const nz = Math.max(0.8, Math.min(3, v.zoom * f));
+      const nz = Math.max(0.45, Math.min(3, v.zoom * f));
       const anchor = clientToGraph(ev);
       if (anchor) {
         // 锚点守恒：(a-c')·z' = (a-c)·z ⇒ k = 旧/新（K3 P0-1：写反成新/旧会逐 tick 外漂）
@@ -464,6 +485,18 @@ const GraphAside = defineComponent({
         role: 'img',
         'aria-label': 'graph：coral 实心为已写文章，灰实心为已读，空心为待读；滚轮缩放',
         onWheel: (ev: WheelEvent) => onWheel(ev),
+        onMousedown: (ev: MouseEvent) => {
+          if (dragId || !svgEl) return; // 节点拖拽由 hit 圆自理；空白处启动平移
+          const rect = svgEl.getBoundingClientRect();
+          const raw = svgEl.getAttribute('viewBox');
+          if (!raw) return;
+          const [vx0r, vy0r, vwr] = raw.split(/\s+/).map(Number);
+          const scale = rect.width / vwr;
+          const cxp = 'touches' in ev ? (ev as unknown as TouchEvent).touches[0].clientX : ev.clientX;
+          const cyp = 'touches' in ev ? (ev as unknown as TouchEvent).touches[0].clientY : ev.clientY;
+          pan = { cx: view.value.cx, cy: view.value.cy, gx: vx0r + (cxp - rect.left) / scale, gy: vy0r + (cyp - rect.top) / scale };
+          ev.preventDefault();
+        },
       }, [
         h('title', {}, 'graph'),
         ...edges.map(renderEdge).filter(Boolean),
@@ -524,6 +557,24 @@ const GraphFull = defineComponent({
       return { x: (cx - rect.left) * scale, y: (cy - rect.top) * (760 / rect.height) };
     };
     const onMove = (ev: MouseEvent | TouchEvent) => {
+      if (pan && !dragId && svgEl) {
+        // pan：client 位移换算图单位，反向移动视窗中心
+        const rect = svgEl.getBoundingClientRect();
+        const raw = svgEl.getAttribute('viewBox');
+        if (raw) {
+          const [vx0r, vy0r, vwr] = raw.split(/\s+/).map(Number);
+          const scale = rect.width / vwr;
+          const cxp = 'touches' in ev ? ev.touches[0].clientX : ev.clientX;
+          const cyp = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
+          const gx = vx0r + (cxp - rect.left) / scale;
+          const gy = vy0r + (cyp - rect.top) / scale;
+          view.value.cx = pan.cx - (gx - pan.gx);
+          view.value.cy = pan.cy - (gy - pan.gy);
+          tickId.value++;
+        }
+        if ('touches' in ev) ev.preventDefault();
+        return;
+      }
       if (!dragId || !sim) return;
       const g = clientToGraph(ev);
       if (!g) return;

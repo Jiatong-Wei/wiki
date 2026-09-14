@@ -795,7 +795,9 @@ const SidebarToggle = defineComponent({
     const { hasSidebar } = useSidebar();
     const collapsed = ref(false);
     const apply = () => {
-      document.documentElement.classList.toggle('sidebar-collapsed', collapsed.value);
+      const root = document.documentElement.classList;
+      root.toggle('sidebar-collapsed', collapsed.value);
+      root.toggle('sidebar-expanded', !collapsed.value); // 展开态显式锚定：max-width:0 的 media 规则别越权
     };
     let animTimer = 0;
     const toggle = () => {

@@ -670,7 +670,8 @@
   transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
 }
 @media (min-width: 960px) {
-  .VPNavBar.has-sidebar .title { max-width: var(--vp-sidebar-width); overflow: hidden; }
+  /* 展开态锚定 sidebar-expanded：覆盖了收起态的 max-width:0（类切换过渡靠它连续插值） */
+  html.sidebar-expanded .VPNavBar.has-sidebar .title { max-width: var(--vp-sidebar-width); overflow: hidden; }
   html.sidebar-collapsed .VPNavBar.has-sidebar .title { max-width: 0; opacity: 0; pointer-events: none; }
 }
   .VPContent, .VPNavBar .content, .VPNavBar .divider { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }

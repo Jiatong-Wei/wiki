@@ -38,18 +38,19 @@ $P$rogress-$A$ware Policy $L$earning via Affordance Reasoning for Long-Horizon R
 
 - **状态混叠**，长程任务的不同阶段很容易观测到视觉上无法区分的两帧画面。"即将下抓"和"刚释放完准备去下一个目标" 均对应 "张开的夹爪悬在桌面上方"这一画面，一张图像背后很有可能藏着两个不同的任务阶段，而我们显然无法**从像素中推断阶段变量**
 
-- **边际化**，通常训练数据只能提供pair of observation-action ，始终缺少一个表示阶段的标签。这使得条件分布 $\pi(a \mid o)$ 无形中把阶段变量进行了加总（marginalize）处理：$\pi(a \mid o) = \sum_s \pi(a \mid o, s) \cdot P(s \mid o)$\
+- **边际化**，通常训练数据只能提供observation-action pair，始终缺少一个表示阶段的标签。这使得条件分布 $\pi(a \mid o)$ 无形中把阶段变量进行了加总（marginalize）处理：$\pi(a \mid o) = \sum_s \pi(a \mid o, s) \cdot P(s \mid o)$\
 两个阶段的正确动作——向下抓 vs 向上撤，各占一半概率，为动作分布引入了**多峰性**
 
-在拟合层，回归式BC通常**以MSE为损失函数**，用 MSE（Mean Squared Error）计算loss，而均方误差的最优解在条件期望处取得，对一个无重叠的双峰分布求均方误差最优解，会自动落入**两峰之间的谷底**——可见单点回归天然就不能拟合多峰分布\
+在拟合层，回归式BC通常**以均方误差MSE（Mean Squared Error）为损失函数**，均方误差的最优解在条件期望处取得，对一个无重叠的双峰分布求均方误差最优解，会自动落入**两峰之间的谷底**——可见单点回归天然就不能拟合多峰分布\
 更进一步，MSE求出的动作取决于多峰的几何特性，受权重吸引，如果落入上一阶段动作峰内，policy就会**重复**上个阶段的动作；如果落在两峰之间，有可能会通过一个混合动作意外把物体碰进目标位置，**跳过若干步骤**蒙混过关；如果落入了最后一个subtask的分布内，则有可能**提前终止**\
-openVLA没有选择笨重的MSE方法，而是采用token自回归+交叉熵，会学习整个分布，但由于执行时只能输出一条确定动作，所以会不可避免地在不同的峰间横跳，破坏最终动作的效果
+OpenVLA没有选择笨重的MSE方法，而是采用token自回归+交叉熵，会学习整个分布，但由于执行时只能输出一条确定动作，所以会不可避免地在不同的峰间横跳，破坏最终动作的效果
 
-一般而言，多峰性主要是由于模型无法分辨跨阶段的状态混叠和同一阶段内出现的相同视口，目前主要有三种方法来解决这一问题：
+一般而言，多峰性主要是由于模型无法分辨同一视口对应的多种合法下一步动作，目前主要有三种方法来解决这一问题：
 >这三种方法都值得单独开一篇文章浅谈，我会尽快更新
 - Action Chunk Transformer(ACT)
 - Diffusion Policy
 - Flow Matching
+PALM的动作头选择了diffusion-based的方法，一方面是因为VLA原生的多峰性使得我们天然厌恶点估计，另一方面是由于生成式方法能学习到整个条件分布，具备点估计无法比拟的优势。同时diffusion-based最后大都采用回归式优化，没什么花活，在小数据集上相对比较稳定
 
 ## PALM是怎么解决的？
 
@@ -62,16 +63,16 @@ openVLA没有选择笨重的MSE方法，而是采用token自回归+交叉熵，�
 
 ## affordance reasoning 是怎么实现的？
 
-affordance 推理的具体实现思想仍然是supervised learning：**基础模型使用机器人真机和人类示教数据集作为教师生成伪标签 → 学生 query 预测未来 t+n 时刻的同类标签 → 用与标签形式匹配的 loss 对齐**\
+affordance 推理的具体实现思想仍然是supervised learning：**基础模型扮演教师，在机器人真机和人类示教数据上生成伪标签 → 学生 query 预测未来 t+n 时刻的同类标签 → 用与标签形式匹配的 loss 对齐**\
 训练时会随机抽取一个下标t，输入取第t帧，监督标签会按t+n从录制好的视频数据中抽出第t+n帧，在训练集上学习一个从第t帧推断第t+n帧的函数，训练完成后该函数就能实现affordance reasoning
 
 ### 标签是怎么打上去的？
 #### Global
 具体而言，PALM使用了 Grounding DINO 这一先进的开放集目标检测模型，可以根据文字提示检测任意目标，第t+n帧和文本指令传入Grounding DINO后，模型会用一个box框出文本指示的目标，然后传入 SAM(Segment Anything Model) 继续处理，由于SAM接受将点、框、掩码等作为prompt，所以在 Grounding DINO 的基础上，SAM会更加精细地分割出物体轮廓，吐出来一个0-1矩阵作为mask，接着通过CLIP编码指令，冻结MAE ViT-B来提取特征\
-此外，Global的损失函数选择了Focal loss和Dice，这是为了更准确地学习小目标和物体边缘这种略微有些corner的case
+此外，Global的损失函数选择了Focal loss和Dice，这是为了更准确地学习小目标和物体边缘这种corner case
 
 #### Local
-Global会从视口中把物体的mask扣出来，告诉机器人“抓谁”，但一个物体有很多不同的接触位置，这时候就需要Local来回答“接触发生在哪里”\
+Global会从视口中把物体的mask抠出来，告诉机器人“抓谁”，但一个物体有很多不同的接触位置，这时候就需要Local来回答“接触发生在哪里”\
 在这一步，由人工确定接触会发生在哪一帧，随后使用 GLOVER++ 在这一帧的画面上定位出接触像素，再以每个接触点为中心构建一个高斯热力图，用更加温和的方式表达出affordance\
 同样地，这里仍然使用了Focal loss，原因也是因为接触像素在整张图中还是太小，需要避免其被背景淹没\
 不同之处在于高斯热力图本身属于一个空间分布，Focal loss只能限制点而无法约束整张图的形状，因此额外引入KL散度共同作为损失函数
@@ -83,7 +84,7 @@ Global会从视口中把物体的mask扣出来，告诉机器人“抓谁”，�
 
 #### Dynamic
 在获知“该抓谁”、“抓哪里”、“抓起来放哪”之后，我们还需要规定当前位姿到目标位姿之间的运动过程\
-cotracker是一款基于transformer的开源点跟踪模型，在教师视频的第t−δ到t+n的短帧段上初始化一张grid，测算每个点的累计位移，设计一个合理的阈值，过滤掉静态背景和抖动噪声，生成实际的运动区域mask，使用VAE表达损失函数
+Cotracker是一款基于transformer的开源点跟踪模型，在教师视频的第t−δ到t+n的短帧段上初始化一张grid，测算每个点的累计位移，设计一个合理的阈值，过滤掉静态背景和抖动噪声，生成实际的运动区域mask，使用VAE表达损失函数
 
 | Dimension | 回答的问题 | 教师 | 标签形式 | Loss |
 |---|---|---|---|---|
@@ -95,11 +96,9 @@ cotracker是一款基于transformer的开源点跟踪模型，在教师视频的
 四路 affordance 在 CALVIN 仿真任务 "Slide the pick block into the drawer" 里协同工作的样子——随任务进度（列方向），Global 的目标转移、Local 的接触热图、Spatial 的候选放置点、Dynamic 的运动方向同步漂移：
 
 ![PALM 四路 affordance 可视化：任务 "Slide the pick block into the drawer"，五列时间步 × 四路输出](/images/palm/fig_aff_visualization.png)
-## progress-aware 是怎么实现的
-在affordance reasoning的部分，人工主要负责完成稀疏关键帧的标注，每一个start-grasp&contact-release闭环都可以看作是完成了一个子任务，如果我们把start状态视作进度为0，release视作进度为1，那么通过插值的手段就可以得出每一帧对应的进度 $p \in [0, 1]$，同时人类视频和机器人轨迹共有相同的语义，这使得在人类视频上进行pre-training，在机器人数据上进行fine-tuning是完全合理的。
 
-### 为什么选择了diffusion-based的方法来建模？
-生成式方法的独特之处在于其能学习到整个条件分布，这是点估计无法比拟的优势，而VLA原生的多峰性使得我们天然地厌恶点估计。而diffusion-based最后大都采用回归式优化，没什么花活，在小数据集上相对比较稳定，
+## progress-aware 是怎么实现的
+在affordance reasoning的部分，人工主要负责完成稀疏关键帧的标注，每一个start-[grasp&contact]-release闭环都可以看作是完成了一个子任务，如果我们把start状态视作进度为0，release视作进度为1，那么通过插值的手段就可以得出每一帧对应的进度 $p \in [0, 1]$，同时人类视频和机器人轨迹共享一套交互里程碑语义，这使得在人类视频上进行pre-training，在机器人数据上进行fine-tuning是完全合理的。
 
 ## 68M 小模型为什么能四两拨千斤？
 PALM在Benchmark上的跑分非常亮眼。LIBERO-LONG 看成功率，CALVIN ABC→D 看连续完成子任务的平均链长（满分 5）：
@@ -112,7 +111,7 @@ PALM在Benchmark上的跑分非常亮眼。LIBERO-LONG 看成功率，CALVIN ABC
 | CoT-VLA | 69.0% | Seer | 3.98 |
 | OpenVLA | 53.7% | π₀ | 3.92 |
 | Octo | 51.1% | RT-1 | 0.90 |
-| Diffusion Policy | 50.5% | | |
+| Diffusion Policy | 50.5% | Diffusion Policy | 0.56 |
 
 </div>
 
@@ -123,7 +122,7 @@ PALM在Benchmark上的跑分非常亮眼。LIBERO-LONG 看成功率，CALVIN ABC
 >在今天，大部分的复现任务都可以交给agent来完成，但为了勘破AI Slop，掌握基本的复现SOP仍然是很有必要的QVQ
 
 在PLAN Lab的github主页可以找到PALM的代码仓库，我也尝试对其进行了简单复现\
-截止2026-09整个代码仓库还没有issue，有2个commit，6月17日和6月19日各有一次，目前主要起到一个网盘存代码的作用，后期开源共创多了以后可能commit会多一些
+截至2026-09整个代码仓库还没有issue，有2个commit，6月17日和6月19日各有一次，目前主要起到一个网盘存代码的作用，后期开源共创多了以后可能commit会多一些
 
 ### Readme
 拿到一个陌生的仓库，readme是我们快速上手的最好方式。通常开发者会在readme中详细记录仓库代码属于哪一篇工作，并且会用一部分篇幅简单介绍一下工作的亮点，接着会给出复现所必需的命令参考、数据和权重等文件的位置，以及以何种许可证进行开源（MIT or Apache-2.0, even GPL）\
@@ -132,7 +131,7 @@ PALM在Benchmark上的跑分非常亮眼。LIBERO-LONG 看成功率，CALVIN ABC
 - Getting Started，记录了PALM中提及的3个实验，2个仿真实验（CALVIN和LIBERO），一个真机实验。两套仿真栈有版本冲突，使用了不同的安装文档，真机实验也分了两个track，如果愿意使用官方释出的pre-training weight，则按照Quick Training中的指示进行操作，如果想自己进行预训练，则遵照pre-training中的指示
 - Checkpoints，在谷歌云盘上托管了模型权重
 
-注意到train.py里默认设置了**progress=None**，此处如果不开启的话将无法激活Progress-aware特性。同时仿真track的脚本中默认都没有启用progress通道，缺失DiT+progress的联合解码，真机track启用了progress，但并没有启用论文中提到的锚点插值标注管线\
+注意到train.py里默认设置了**progress=None**，此处如果不开启的话将无法激活Progress-aware特性。同时仿真track的脚本中默认都没有启用progress通道，缺失DiT（Diffusion Transformer）+progress的联合解码，真机track启用了progress，但并没有启用论文中提到的锚点插值标注管线\
 也就是说论文宣称的“a diffusion-based policy jointly decodes the robot's action and a continuous progress value”并没有和仿真轨的脚本对齐，我们理论上无法从代码仓库中复现出论文中宣称的LIBERO-LONG 91.8%，这或许是因为没有上传最终版本，评测日志显示运行时间为2024-12
 
 ### Reproduce
@@ -140,7 +139,7 @@ Readme使用torch==1.13.1+cu117，这一配置不支持Ada架构的RTX显卡，�
 >配环境目前应该可以完全交给agent来完成，各家模型都能够完成的不错
 
 首先按照**docs/LIBERO_INSTALL.md**配置好环境，接着装载3个权重文件，然后就可以开始根据eval_libero.py脚本的指令跑评测了\
-核验完流程没问题可以直接交给agent去做，我按照10任务*20eps，seed42，eval.sh全参数在38.pth权重下跑出了86.5%，和论文标称值91.8%相差5.3pp，与github评测日志中的87.5%相差1.0pp，在palm_10权重下跑出了85.5%，和论文标称值相差6.3pp
+核验完流程没问题可以直接交给agent去做，我按照10任务*20eps，seed42，eval.sh全参数在谷歌云盘里的38.pth权重下跑出了86.5%，和论文标称值91.8%相差5.3pp，与github评测日志中的87.5%相差1.0pp，在palm_10权重下跑出了85.5%，和论文标称值相差6.3pp
 
 ## 在PALM之外
 

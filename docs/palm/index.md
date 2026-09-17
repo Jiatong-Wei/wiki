@@ -9,13 +9,13 @@ date: 2026-09-17
 
 ## Hook：pick-and-place
 
-想象我们在教机器人完成一项幼儿园水平的测试：把菠萝放进白盘、葡萄放进白碗、橙子放进蓝碗。三个子任务，满打满算六个步骤，对 2026 年的 VLA 模型来说，前两步往往轻松完成——然后它对着**已经放进碗里的葡萄，又伸了一次手**
+想象我们在教机器人完成一项幼儿园水平的测试：把菠萝放进白盘、葡萄放进白碗、橙子放进蓝碗。三样水果，六个连续子任务（每样各含抓取与放置两步），对 2026 年的 VLA 模型来说，前两步往往轻松完成——然后它对着**已经放进碗里的葡萄，又伸了一次手**
 
-![PALM 真机六步长程任务：xArm6 + RealSense D555，按指令依序完成三个子任务](/images/palm/fig_longtask.png)
+![PALM 真机长程任务：xArm6 + 两台 RealSense D455，六个连续子任务依序完成](/images/palm/fig_longtask.png)
 
-Why？为什么步骤稍微一多，VLA就很容易失败？原因不在于数据量没scale up，而在于三大结构性问题的层见迭出：
+Why？为什么步骤稍微一多，VLA就很容易失败？原因不在于数据量没scale up，而在于数据与拟合两层的结构性缺陷，其典型失效症状有三：
 - **repeated or unnecessary actions**：重复，或进行了不必要的动作
-- **skipped required tasks**：跳步
+- **skipped required subtasks**：跳步
 - **premature termination and declare success in incorrect states**：提前终止
 
 是的，直到今天，具身智能的long horizon task仍未得到很好地解决，大部分时间我们都只能对着Physical work will be a choice[^1] 所描绘的盛大图景望梅止渴。相比已经基本落地的coding agent，具身就像一颗美丽的Bubble，阳光打上去会折射出瑰丽的彩色光影，但其自身又娇弱万分\
@@ -55,7 +55,7 @@ openVLA没有选择笨重的MSE方法，而是采用token自回归+交叉熵，�
 
 谜底就在谜面上，论文标题已经告诉了我们答案
 - **affordance reasoning**，为policy补充判别性context，先验地告诉模型**该和哪个物体的哪里接触、如何接触**,这些信息能够将混叠的观测重新区分开来：同一个画面配上描述下一步交互的先验信息，即可分离空间上的多峰
-- **progress aware**，把当前子任务的完成情况作为信号塞回输入or输出端，进一步消除了时间上的多峰性
+- **progress aware**，把当前子任务的完成进度作为输出信号与动作联合解码（推理时用作子任务切换的决策边界），进一步消除了时间上的多峰性
 
 ![PALM 架构图](/images/palm/pipeline.png)
 >此处涉及的MLP等机器学习基础知识以及GPT-2我都会单开一篇浅谈，届时会和本文互相echo，坑先挖好，我尽快填。
@@ -92,7 +92,7 @@ cotracker是一款基于transformer的开源点跟踪模型，在教师视频的
 | Spatial | 交互后放哪？ | SpatialVLM + RoboPoint | 候选放置点集 | set-matching |
 | Dynamic | 物体沿什么轨迹被移动？ | CoTracker | 运动区域 mask | VAE 式重建 |
 
-四路 affordance 在真实任务里协同工作的样子——随任务进度（列方向），Global 的目标转移、Local 的接触热图、Spatial 的候选放置点、Dynamic 的运动方向同步漂移：
+四路 affordance 在 CALVIN 仿真任务 "Slide the pick block into the drawer" 里协同工作的样子——随任务进度（列方向），Global 的目标转移、Local 的接触热图、Spatial 的候选放置点、Dynamic 的运动方向同步漂移：
 
 ![PALM 四路 affordance 可视化：任务 "Slide the pick block into the drawer"，五列时间步 × 四路输出](/images/palm/fig_aff_visualization.png)
 ## progress-aware 是怎么实现的

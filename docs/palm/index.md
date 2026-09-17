@@ -156,8 +156,6 @@ Readme使用torch==1.13.1+cu117，这一配置不支持Ada架构的RTX显卡，�
 long horizon task这块坚冰或许很难融化，但今天已经有凿子在正确的位置敲击。大模型的发展通常是非线性的[^2]，我始终相信技术信仰坚定，对实现Physical AGI充满热忱的researchers必然能够找到那条柳暗花明的通幽曲径\
 <span class="nb-cursive">Maybe not today, but one day</span>
 
----
-
 *本文写作基于论文 arXiv:2601.07060 与作者开源仓库 PLAN-Lab/PALM 的本地复现，相关工作已被CVPR 2026接收；除复现环节外数据均来自论文原文。*
 [^1]: Elon Musk在2021年Tesla AI Day上的发言
 [^2]: 罗福莉在2025小米人车家合作伙伴大会上的发言

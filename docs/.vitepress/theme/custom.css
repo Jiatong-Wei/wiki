@@ -213,6 +213,11 @@
   .vp-doc p a:hover, .vp-doc li a:hover {
     background-image: linear-gradient(currentColor, currentColor);
   }
+  .vp-doc .footnote-ref a,
+  .vp-doc .footnote-backref {
+    background-image: none;
+    padding-bottom: 0;
+  }
 
   .VPHome .VPFeature.link:hover { transform: translateY(-2px); }
   .VPHome .VPFeature .link-text-icon { transition: transform 0.25s ease; }
@@ -400,6 +405,39 @@
   text-align: center;
 }
 .vp-doc p:has(> img:only-child) + blockquote > p { font-size: 12.5px; }
+
+/* paper footnotes: superscript in body, collected list at end */
+.vp-doc .footnote-ref {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.72em;
+  font-weight: 600;
+  margin-left: 0.12em;
+}
+.vp-doc .footnote-ref a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+}
+.vp-doc hr.footnotes-sep {
+  margin: 48px 0 16px;
+  border: none;
+  border-top: 1px solid var(--vp-c-divider);
+}
+.vp-doc .footnotes {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--vp-c-text-2);
+}
+.vp-doc .footnotes-list {
+  padding-left: 1.35em;
+}
+.vp-doc .footnote-item p {
+  margin: 0.25em 0;
+}
+.vp-doc .footnote-backref {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+  margin-left: 0.25em;
+}
 
 /* P1-4 booktabs: horizontal hairlines only, no zebra, no grid */
 .vp-doc tr,

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import footnote from 'markdown-it-footnote';
 
 // 六篇技术文章 + 图表/PDF 归档。部署为 project site：jiatong-wei.github.io/wiki/
 const BASE = '/wiki/';
@@ -70,6 +71,14 @@ export default defineConfig({
     // $...$ inline math — native since VitePress 1.2 (the 3DGS post uses it heavily)
     math: true,
     config(md) {
+      md.use(footnote);
+      // 论文风上标：1 而不是 [1]
+      md.renderer.rules.footnote_caption = (tokens, idx) => {
+        const n = String(tokens[idx].meta.id + 1);
+        const sub = tokens[idx].meta.subId;
+        return sub > 0 ? `${n}:${sub}` : n;
+      };
+
       // K3 深检 P1-3：全站图片懒加载——构建期注入，未来文章零心智负担
       const origImage = md.renderer.rules.image!;
       md.renderer.rules.image = (tokens, idx, options, env, self) => {

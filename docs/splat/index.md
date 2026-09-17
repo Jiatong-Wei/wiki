@@ -39,4 +39,6 @@ $FastLab$主理人，著名学者Fei.G将所有技术范式统归为3个阶段�
 ## Ending
 最终的结局还算可以，重建出来了一个相对可用的点云，认识了知天下的老大Kuan.S、Beluga等一众对高斯泼溅充满激情的神豪，对我个人而言也算对高斯泼溅进行了一次管中窥豹的尝试，这感觉还算不错吧，虽然干的主要是$Dirty$ $Work$，希望以后有机会尝试一些算法侧的东西。
 ## Appendix
-最后附上托管在知天下的展机点云合集：[西北工业大学展机](https://3d.explorerglobal.cn/collection/web/5vxjmwx8)
+最后附上托管在知天下的展机点云合集：[西北工业大学展机](https://3d.explorerglobal.cn/collection/web/5vxjmwx8)，加载后可以直接拖动环视：
+
+<iframe class="gs-embed" src="https://3d.explorerglobal.cn/collection/web/5vxjmwx8" title="西北工业大学展机" loading="lazy" allowfullscreen></iframe>

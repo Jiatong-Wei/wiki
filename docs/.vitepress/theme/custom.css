@@ -383,6 +383,12 @@
   display: block;
 }
 
+/* 知天下 3D 合集嵌入：交互查看器需要更高视口，不吃 B 站的 16:9 */
+.vp-doc iframe.gs-embed {
+  aspect-ratio: auto;
+  height: clamp(460px, 62vh, 640px);
+}
+
 /* Human certified badge icon: coral in light, softer coral in dark */
 .vp-doc .cert-ico { display: inline-block; color: #c15f3c; vertical-align: -2px; }
 .dark .vp-doc .cert-ico { color: #e39a7c; }

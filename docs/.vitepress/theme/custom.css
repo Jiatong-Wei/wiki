@@ -366,6 +366,13 @@
   }
 }
 
+/* PALM affordance 可视化：原图幅面大（5×4 网格），限宽居中避免占满版心 */
+.vp-doc img[src*="fig_aff_visualization"] {
+  display: block;
+  width: min(560px, 100%);
+  margin: 1rem auto;
+}
+
 /* B站嵌入视频：全宽 16:9，不破版心 */
 .vp-doc iframe {
   width: 100%;

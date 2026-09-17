@@ -70,12 +70,11 @@ affordance 推理的具体实现思想仍然是supervised learning：**基础模
 此外，Global的损失函数选择了Focal loss和Dice，这是为了更准确地学习小目标和物体边缘这种略微有些corner的case
 
 #### Local
->GLOVER++，arXiv:2505.11865，获得了CoRL 2025 GenPriors Workshop best paper
-
 Global会从视口中把物体的mask扣出来，告诉机器人“抓谁”，但一个物体有很多不同的接触位置，这时候就需要Local来回答“接触发生在哪里”\
 在这一步，由人工确定接触会发生在哪一帧，随后使用 GLOVER++ 在这一帧的画面上定位出接触像素，再以每个接触点为中心构建一个高斯热力图，用更加温和的方式表达出affordance\
 同样地，这里仍然使用了Focal loss，原因也是因为接触像素在整张图中还是太小，需要避免其被背景淹没\
 不同之处在于高斯热力图本身属于一个空间分布，Focal loss只能限制点而无法约束整张图的形状，因此额外引入KL散度共同作为损失函数
+>GLOVER++，arXiv:2505.11865，获得了CoRL 2025 GenPriors Workshop best paper
 
 #### Spatial
 同一物体可能会有很多合法的放置点，但我们通常希望机器人能够将物体放在特定的区域范围内，在这一part我们要解决抓起来放哪里。\
@@ -95,8 +94,6 @@ cotracker是一款基于transformer的开源点跟踪模型，在教师视频的
 四路 affordance 在真实任务里协同工作的样子——随任务进度（列方向），Global 的目标转移、Local 的接触热图、Spatial 的候选放置点、Dynamic 的运动方向同步漂移：
 
 ![PALM 四路 affordance 可视化：任务 "Slide the pick block into the drawer"，五列时间步 × 四路输出](/images/palm/fig_aff_visualization.png)
-
-
 ## progress-aware 是怎么实现的
 在affordance reasoning的部分，人工主要负责完成稀疏关键帧的标注，每一个start-grasp&contact-release闭环都可以看作是完成了一个子任务，如果我们把start状态视作进度为0，release视作进度为1，那么通过插值的手段就可以得出每一帧对应的进度 $p \in [0, 1]$，同时人类视频和机器人轨迹共有相同的语义，这使得在人类视频上进行pre-training，在机器人数据上进行fine-tuning是完全合理的。
 
@@ -143,10 +140,6 @@ Readme使用torch==1.13.1+cu117，这一配置不支持Ada架构的RTX显卡，�
 
 首先按照**docs/LIBERO_INSTALL.md**配置好环境，接着装载3个权重文件，然后就可以开始根据eval_libero.py脚本的指令跑评测了\
 核验完流程没问题可以直接交给agent去做，我按照10任务*20eps，seed42，eval.sh全参数在38.pth权重下跑出了86.5%，和论文标称值91.8%相差5.3pp，与github评测日志中的87.5%相差1.0pp，在palm_10权重下跑出了85.5%，和论文标称值相差6.3pp
-
-复现的 50-episode 冒烟评测战报（逐 episode 成败、分任务小分、预注册验收判定）：
-
-![PALM LIBERO-LONG 复现战报：50 episodes 冒烟 84.0%，逐 episode 热图与判定卡](/images/palm/smoke_heatmap_v4.png)
 
 ## 在PALM之外
 

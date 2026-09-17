@@ -11,6 +11,8 @@ date: 2026-09-17
 
 想象我们在教机器人完成一项幼儿园水平的测试：把菠萝放进白盘、葡萄放进白碗、橙子放进蓝碗。三个子任务，满打满算六个步骤，对 2026 年的 VLA 模型来说，前两步往往轻松完成——然后它对着**已经放进碗里的葡萄，又伸了一次手**
 
+![PALM 真机六步长程任务：xArm6 + RealSense D555，按指令依序完成三个子任务](/images/palm/fig_longtask.png)
+
 Why？为什么步骤稍微一多，VLA就很容易失败？原因不在于数据量没scale up，而在于三大结构性问题的层见迭出：
 - **repeated or unnecessary actions**：重复，或进行了不必要的动作
 - **skipped required tasks**：跳步
@@ -36,7 +38,7 @@ PALM: Progress-Aware Policy Learning via Affordance Reasoning for Long-Horizon R
 
 - **状态混叠**，长程任务的不同阶段很容易观测到视觉上无法区分的两帧画面。"即将下抓"和"刚释放完准备去下一个目标" 均对应 "张开的夹爪悬在桌面上方"这一画面，一张图像背后很有可能藏着两个不同的任务阶段，而我们无法**从像素中推断阶段变量**
 
-- **边际化**，通常训练数据只能提供 observation-action ，始终缺少一个表示阶段的标签。这使得条件分布 π(a|o) 无形中把阶段变量进行了加总（marginalize）处理：π(a|o) = Σ_s π(a|o,s)·P(s|o)。两个阶段的正确动作——向下抓 vs 向上撤，各占一半概率，为动作分布引入了**多峰性**
+- **边际化**，通常训练数据只能提供 observation-action ，始终缺少一个表示阶段的标签。这使得条件分布 $\pi(a \mid o)$ 无形中把阶段变量进行了加总（marginalize）处理：$\pi(a \mid o) = \sum_s \pi(a \mid o, s) \cdot P(s \mid o)$。两个阶段的正确动作——向下抓 vs 向上撤，各占一半概率，为动作分布引入了**多峰性**
 
 在拟合层，回归式BC通常**以MSE为损失函数**，用 MSE（Mean Squared Error）计算loss，而均方误差的最优解在条件期望处取得，对一个无重叠的双峰分布求均方误差最优解，会自动落入**两峰之间的谷底**——可见单点回归天然就不能拟合多峰分布\
 更进一步，MSE求出的动作取决于多峰的几何特性，受权重吸引，如果落入上一阶段动作峰内，policy就会**重复**上个阶段的动作；如果落在两峰之间，有可能会通过一个混合动作意外把物体碰进目标位置，**跳过若干步骤**蒙混过关；如果落入了最后一个subtask的分布内，则有可能**提前终止**\
@@ -90,9 +92,13 @@ cotracker是一款基于transformer的开源点跟踪模型，在教师视频的
 | Spatial | 交互后放哪？ | SpatialVLM + RoboPoint | 候选放置点集 | set-matching |
 | Dynamic | 物体沿什么轨迹被移动？ | CoTracker | 运动区域 mask | VAE 式重建 |
 
+四路 affordance 在真实任务里协同工作的样子——随任务进度（列方向），Global 的目标转移、Local 的接触热图、Spatial 的候选放置点、Dynamic 的运动方向同步漂移：
+
+![PALM 四路 affordance 可视化：任务 "Slide the pick block into the drawer"，五列时间步 × 四路输出](/images/palm/fig_aff_visualization.png)
+
 
 ## progress-aware 是怎么实现的
-在affordance reasoning的部分，人工主要负责完成稀疏关键帧的标注，每一个start-grasp&contact-release闭环都可以看作是完成了一个子任务，如果我们把start状态视作进度为0，release视作进度为1，那么通过插值的手段就可以得出每一帧对应的进度p∈[0,1]，同时人类视频和机器人轨迹共有相同的语义，这使得在人类视频上进行pre-training，在机器人数据上进行fine-tuning是完全合理的。
+在affordance reasoning的部分，人工主要负责完成稀疏关键帧的标注，每一个start-grasp&contact-release闭环都可以看作是完成了一个子任务，如果我们把start状态视作进度为0，release视作进度为1，那么通过插值的手段就可以得出每一帧对应的进度 $p \in [0, 1]$，同时人类视频和机器人轨迹共有相同的语义，这使得在人类视频上进行pre-training，在机器人数据上进行fine-tuning是完全合理的。
 
 ### 为什么选择了diffusion-based的方法来建模？
 生成式方法的独特之处在于其能学习到整个条件分布，这是点估计无法比拟的优势，而VLA原生的多峰性使得我们天然地厌恶点估计。而diffusion-based最后大都采用回归式优化，没什么花活，在小数据集上相对比较稳定，
@@ -137,6 +143,10 @@ Readme使用torch==1.13.1+cu117，这一配置不支持Ada架构的RTX显卡，�
 
 首先按照**docs/LIBERO_INSTALL.md**配置好环境，接着装载3个权重文件，然后就可以开始根据eval_libero.py脚本的指令跑评测了\
 核验完流程没问题可以直接交给agent去做，我按照10任务*20eps，seed42，eval.sh全参数在38.pth权重下跑出了86.5%，和论文标称值91.8%相差5.3pp，与github评测日志中的87.5%相差1.0pp，在palm_10权重下跑出了85.5%，和论文标称值相差6.3pp
+
+复现的 50-episode 冒烟评测战报（逐 episode 成败、分任务小分、预注册验收判定）：
+
+![PALM LIBERO-LONG 复现战报：50 episodes 冒烟 84.0%，逐 episode 热图与判定卡](/images/palm/smoke_heatmap_v4.png)
 
 ## 在PALM之外
 

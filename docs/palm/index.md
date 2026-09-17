@@ -29,7 +29,7 @@ PALM: Progress-Aware Policy Learning via Affordance Reasoning for Long-Horizon R
 
 ### VLA 的长程任务表现为什么不好？
 
-这件事可以从数据层和拟合层两个方面来考虑\
+这件事可以从数据层和拟合层两个方面来考虑
 
 在数据层，我们通常很难用出自己的花活，因为数据层是最上位的层级，不论你是VLA、BC，还是Diffusion-based，都只能想方设法地尝试如何消除数据层的缺陷，很难预先在采数据时就人为消除缺陷。更形象一点，我们可以把数据视作靶子，方法看成箭矢，只能对着靶子射箭而不能先射箭后画靶\
 一般而言，数据层会有这两个主要问题：
@@ -100,20 +100,17 @@ cotracker是一款基于transformer的开源点跟踪模型，在教师视频的
 ## 68M 小模型为什么能四两拨千斤？
 PALM在Benchmark上的跑分非常亮眼。LIBERO-LONG 看成功率，CALVIN ABC→D 看连续完成子任务的平均链长（满分 5）：
 
-| 方法 | LIBERO-LONG 成功率 |
-|---|---|
-| PALM | **91.8%** |
-| CoT-VLA | 69.0% |
-| OpenVLA | 53.7% |
-| Octo | 51.1% |
-| Diffusion Policy | 50.5% |
+<div class="score-duo">
 
-| 方法 | CALVIN ABC→D 平均链长 |
-|---|---|
-| PALM | **4.48** |
-| Seer | 3.98 |
-| π₀ | 3.92 |
-| RT-1 | 0.90 |
+| 方法 | LIBERO-LONG 成功率 | 方法 | CALVIN ABC→D 平均链长 |
+|---|---|---|---|
+| **PALM** | **91.8%** | **PALM** | **4.48** |
+| CoT-VLA | 69.0% | Seer | 3.98 |
+| OpenVLA | 53.7% | π₀ | 3.92 |
+| Octo | 51.1% | RT-1 | 0.90 |
+| Diffusion Policy | 50.5% | | |
+
+</div>
 
 真机 xArm6 上 200 条演示微调后，三个泛化设定（随机位置/视觉干扰/未见光照）平均链长是 OpenVLA 的 **2.4-3.2 倍**。\
 古人云，千人之诺诺，不如一士之谔谔。OpenVLA 虽然可训练参数是PALM的 100 倍，但所有参数均不具备感知**任务进度**和**交互结构**的能力，形成了巨大的信息缺口。反观 PALM 用pre-training + 942 条半自动标注轨迹成功地把监督信号注进了正确的位置。

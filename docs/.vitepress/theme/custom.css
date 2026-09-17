@@ -329,6 +329,43 @@
   white-space: nowrap;
 }
 
+/* PALM 双 benchmark 并排表：单表四列，中缝按 benchmark 分界。
+   窄屏（<560px）回落为上下堆叠：LibreTable 两列全宽，CALVIN 两列降级为次级缩进行。 */
+.vp-doc .score-duo table {
+  min-width: unset;
+}
+.vp-doc .score-duo th,
+.vp-doc .score-duo td {
+  min-width: unset;
+  width: 25%;
+  padding: 9px 14px;
+}
+.vp-doc .score-duo th + th + th,
+.vp-doc .score-duo td + td + td {
+  border-left: 1px solid var(--vp-c-divider);
+  padding-left: 20px;
+}
+.vp-doc .score-duo th:nth-child(2),
+.vp-doc .score-duo td:nth-child(2) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.vp-doc .score-duo th:nth-child(4),
+.vp-doc .score-duo td:nth-child(4) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+  .vp-doc .score-duo th,
+  .vp-doc .score-duo td {
+    width: auto;
+  }
+  .vp-doc .score-duo th + th + th,
+  .vp-doc .score-duo td + td + td {
+    padding-left: 12px;
+  }
+}
+
 /* B站嵌入视频：全宽 16:9，不破版心 */
 .vp-doc iframe {
   width: 100%;

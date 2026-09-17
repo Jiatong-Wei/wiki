@@ -18,27 +18,28 @@ Why？为什么步骤稍微一多，VLA就很容易失败？原因不在于数�
 - **skipped required tasks**：跳步
 - **premature termination and declare success in incorrect states**：提前终止
 
-具身智能当下的处境像一颗美丽的Bubble，阳光打上去会折射出瑰丽的彩色光影，但泡泡本身又是如此娇弱。Physical work will be a choice[^1] 所描绘的盛大图景仿佛近在咫尺，可如今 long horizon task 还迟迟无法完美攻克。Anyway，研究者们从未停下探索的步伐，本文要介绍的PALM，就是在VLA长程任务上的一次船新尝试。
+是的，直到今天，具身智能的long horizon task仍未得到很好地解决，大部分时间我们都只能对着Physical work will be a choice[^1] 所描绘的盛大图景望梅止渴。相比已经基本落地的coding agent，具身就像一颗美丽的Bubble，阳光打上去会折射出瑰丽的彩色光影，但其自身又娇弱万分\
+Anyway，研究者们从未停下探索与突破的脚步，本文要介绍的PALM，就是在VLA长程任务上的一次船新尝试。
 
 ## What's PALM？
 
-PALM: Progress-Aware Policy Learning via Affordance Reasoning for Long-Horizon Robotic Manipulation，PLAN Lab 出品，合作者横跨UPenn、UIUC、NTU、Oxford和MIT\
+$P$rogress-$A$ware Policy $L$earning via Affordance Reasoning for Long-Horizon Robotic $M$anipulation，PLAN Lab 出品，合作者横跨UPenn、UIUC、NTU、Oxford和MIT\
 简而言之，PALM给 VLA 装了两个外挂：
 - **affordance reasoning**
-- **progress aware**\
-
+- **progress aware**
 前者让 policy 知道该和什么物体在哪里如何交互，后者让 policy 在长程任务里不再失忆
 
 ### VLA 的长程任务表现为什么不好？
 
 这件事可以从数据层和拟合层两个方面来考虑
 
-在数据层，我们通常很难用出自己的花活，因为数据层是最上位的层级，不论你是VLA、BC，还是Diffusion-based，都只能想方设法地尝试如何消除数据层的缺陷，很难预先在采数据时就人为消除缺陷。更形象一点，我们可以把数据视作靶子，方法看成箭矢，只能对着靶子射箭而不能先射箭后画靶\
+在数据层，我们通常很难用出自己的花活，因为数据层是最上位的层级，不论你是VLA、BC，还是Diffusion-based，都只能想方设法地尝试如何消除数据层的缺陷，很难预先在采数据时就人为消除缺陷。更形象地说，我们可以把数据视作靶子，方法看成箭矢，只能对着靶子射箭而不能先射箭后画靶\
 一般而言，数据层会有这两个主要问题：
 
-- **状态混叠**，长程任务的不同阶段很容易观测到视觉上无法区分的两帧画面。"即将下抓"和"刚释放完准备去下一个目标" 均对应 "张开的夹爪悬在桌面上方"这一画面，一张图像背后很有可能藏着两个不同的任务阶段，而我们无法**从像素中推断阶段变量**
+- **状态混叠**，长程任务的不同阶段很容易观测到视觉上无法区分的两帧画面。"即将下抓"和"刚释放完准备去下一个目标" 均对应 "张开的夹爪悬在桌面上方"这一画面，一张图像背后很有可能藏着两个不同的任务阶段，而我们显然无法**从像素中推断阶段变量**
 
-- **边际化**，通常训练数据只能提供 observation-action ，始终缺少一个表示阶段的标签。这使得条件分布 $\pi(a \mid o)$ 无形中把阶段变量进行了加总（marginalize）处理：$\pi(a \mid o) = \sum_s \pi(a \mid o, s) \cdot P(s \mid o)$。两个阶段的正确动作——向下抓 vs 向上撤，各占一半概率，为动作分布引入了**多峰性**
+- **边际化**，通常训练数据只能提供pair of observation-action ，始终缺少一个表示阶段的标签。这使得条件分布 $\pi(a \mid o)$ 无形中把阶段变量进行了加总（marginalize）处理：$\pi(a \mid o) = \sum_s \pi(a \mid o, s) \cdot P(s \mid o)$\
+两个阶段的正确动作——向下抓 vs 向上撤，各占一半概率，为动作分布引入了**多峰性**
 
 在拟合层，回归式BC通常**以MSE为损失函数**，用 MSE（Mean Squared Error）计算loss，而均方误差的最优解在条件期望处取得，对一个无重叠的双峰分布求均方误差最优解，会自动落入**两峰之间的谷底**——可见单点回归天然就不能拟合多峰分布\
 更进一步，MSE求出的动作取决于多峰的几何特性，受权重吸引，如果落入上一阶段动作峰内，policy就会**重复**上个阶段的动作；如果落在两峰之间，有可能会通过一个混合动作意外把物体碰进目标位置，**跳过若干步骤**蒙混过关；如果落入了最后一个subtask的分布内，则有可能**提前终止**\
@@ -152,7 +153,7 @@ Readme使用torch==1.13.1+cu117，这一配置不支持Ada架构的RTX显卡，�
 ## Ending
 
 重新聚焦开头那只对着葡萄再次伸手的机器人，PALM 没有让它变成电眼逼人的钢铁侠，只是让它终于知道自己在哪里、要去哪里——68M的小模型带不来物理AGI，但能让机器人**不再失忆**\
-long horizon task这块坚冰或许很难融化，但今天已经有凿子在正确的位置敲击。大模型的发展通常是非线性的[^2]，我始终相信技术信仰坚定，对实现Physical AGI充满热忱的researcher们必然能够找到那条柳暗花明的通幽曲径\
+long horizon task这块坚冰或许很难融化，但今天已经有凿子在正确的位置敲击。大模型的发展通常是非线性的[^2]，我始终相信技术信仰坚定，对实现Physical AGI充满热忱的researchers必然能够找到那条柳暗花明的通幽曲径\
 <span class="nb-cursive">Maybe not today, but one day</span>
 
 ---

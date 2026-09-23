@@ -14,6 +14,11 @@ hero:
       link: https://jiatong-wei.github.io/
 
 features:
+  - icon: 🔧
+    title: 大模型微调浅谈
+    details: SFT、LoRA，和一条 Llama-Factory 流程
+    link: /Fine-Tuning/
+    linkText: 阅读
   - icon: 🍍
     title: 长程任务也要干净利落：PALM 浅谈
     details: 68M 小模型打 7B OpenVLA，真的假的？

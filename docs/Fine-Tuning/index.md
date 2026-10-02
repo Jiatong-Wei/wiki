@@ -26,8 +26,6 @@ DPO是一种绕过RLHF的替代路线
 ##### LoRA：Low-Rank Adaptation of Large Language Models
 LoRA的核心思想是对矩阵进行低秩分解，什么是低秩分解呢，简单地说就是一个”胖”矩阵可以分解成两个”瘦”矩阵的乘积
 
-![LoRA 低秩分解示意](./lora-lowrank.png)
-
 如果用$h$表示模型输出，我们可以写出下式：
 
 $$
